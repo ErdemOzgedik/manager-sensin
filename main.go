@@ -15,10 +15,32 @@ import (
 	"github.com/joho/godotenv"
 )
 
-func homeLink(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Manager Sensin")
-}
+func home(w http.ResponseWriter, r *http.Request) {
+	var players []constant.Player
+	rdb := helper.GetRedisClient()
+	err := helper.GetRedisData(rdb, constant.TOPPLAYERS, &players)
+	if err == redis.Nil {
+		filter := helper.AddFilterViaFields(&constant.Filter{
+			Overall: []int{87, 99},
+		})
+		players, err = helper.SearchByFilter(filter)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		helper.SetRedisData(rdb, constant.TOPPLAYERS, players, 0)
+	} else if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(constant.Response{
+		Count:   len(players),
+		Players: players,
+	})
+}
 func searchPlayer(w http.ResponseWriter, r *http.Request) {
 	var f constant.Filter
 
@@ -75,7 +97,7 @@ func randomPlayer(w http.ResponseWriter, r *http.Request) {
 		random := rand.Intn(max-min) + min
 		player = players[random]
 		players = append(players[:random], players[random+1:]...)
-		helper.SetRedisData(rdb, key, players)
+		helper.SetRedisData(rdb, key, players, 45*time.Minute)
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -102,7 +124,7 @@ func main() {
 	}
 
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/", homeLink)
+	router.HandleFunc("/", home)
 	router.HandleFunc("/search", searchPlayer).Methods("POST")
 	router.HandleFunc("/random", randomPlayer).Methods("POST")
 

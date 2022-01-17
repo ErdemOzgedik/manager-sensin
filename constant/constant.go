@@ -47,3 +47,10 @@ type Response struct {
 	Count   int      `json:"count,omitempty"`
 	Players []Player `json:"players,omitempty"`
 }
+
+//I have used below constants just to hold required database config's.
+const (
+	DB         = "futManagerDB"
+	ISSUES     = "fut22Collection"
+	TOPPLAYERS = "topPlayers"
+)
