@@ -5,11 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"manager-sensin/constant"
+	"os"
 	"sync"
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/spf13/viper"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -37,7 +37,11 @@ func GetMongoClient() (*mongo.Client, error) {
 	//Perform connection creation operation only once.
 	mongoOnce.Do(func() {
 		// Set client options
-		clientOptions := options.Client().ApplyURI(viper.GetString("database.connectionstring"))
+		cs, err := GetEnv("connectionstring")
+		if err != nil {
+			clientInstanceError = err
+		}
+		clientOptions := options.Client().ApplyURI(cs)
 		// Connect to MongoDB
 		client, err := mongo.Connect(context.TODO(), clientOptions)
 		if err != nil {
@@ -154,4 +158,12 @@ func SearchByFilter(filter bson.D) ([]constant.Player, error) {
 	}
 
 	return players, err
+}
+
+func GetEnv(key string) (string, error) {
+	val, ok := os.LookupEnv(key)
+	if !ok {
+		return "", fmt.Errorf("key didn't set before key:%s", key)
+	}
+	return val, nil
 }

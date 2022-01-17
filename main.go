@@ -12,7 +12,6 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/mux"
-	"github.com/spf13/viper"
 )
 
 func homeLink(w http.ResponseWriter, r *http.Request) {
@@ -87,19 +86,10 @@ func randomPlayer(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	viper.SetConfigName("config")
-	viper.AddConfigPath(".")
-	viper.AutomaticEnv()
-	viper.SetConfigType("yml")
-	if err := viper.ReadInConfig(); err != nil {
-		fmt.Printf("Error reading config file, %s", err)
-	}
-
 	fmt.Println("Server started ...")
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", homeLink)
 	router.HandleFunc("/search", searchPlayer).Methods("POST")
 	router.HandleFunc("/random", randomPlayer).Methods("POST")
 	log.Fatal(http.ListenAndServe(":8080", router))
-
 }
