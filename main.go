@@ -8,22 +8,15 @@ import (
 	"manager-sensin/helper"
 	"math/rand"
 	"net/http"
-	"os/exec"
 	"time"
 
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 )
 
 func homeLink(w http.ResponseWriter, r *http.Request) {
-
-	cmd := exec.Command("curl -4 icanhazip.com")
-	stdout, err := cmd.Output()
-
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	fmt.Fprintf(w, "Manager Sensin ip->"+string(stdout))
+	fmt.Fprintf(w, "Manager Sensin")
 }
 
 func searchPlayer(w http.ResponseWriter, r *http.Request) {
@@ -96,6 +89,12 @@ func randomPlayer(w http.ResponseWriter, r *http.Request) {
 func main() {
 	var port string
 	var err error
+
+	err = godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
 	port, err = helper.GetEnv("PORT")
 	if err != nil {
 		fmt.Println("Server will use default port")
