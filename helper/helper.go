@@ -53,8 +53,17 @@ func GetMongoClient() (*mongo.Client, error) {
 }
 
 func GetRedisClient() *redis.Client {
+	var addr string
+	var err error
+
+	addr, err = GetEnv("REDISTOGO_URL")
+	if err != nil {
+		fmt.Println("Server will use default port")
+		addr = "localhost:6379"
+	}
+
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6380",
+		Addr:     addr,
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
