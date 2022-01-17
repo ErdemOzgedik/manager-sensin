@@ -56,6 +56,7 @@ func GetMongoClient() (*mongo.Client, error) {
 func GetRedisClient() *redis.Client {
 	var addr string
 	var err error
+	var pass string
 
 	addr, err = GetEnv("REDISTOGO_URL")
 	if err != nil {
@@ -67,12 +68,13 @@ func GetRedisClient() *redis.Client {
 			fmt.Println("url parse error")
 		}
 		addr = u.Host
+		pass, _ = u.User.Password()
 	}
 
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     addr,
-		Password: "", // no password set
-		DB:       0,  // use default DB
+		Password: pass, // no password set
+		DB:       0,    // use default DB
 	})
 
 	return rdb
