@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"manager-sensin/constant"
+	"net/url"
 	"os"
-	"strings"
 	"sync"
 	"time"
 
@@ -58,10 +58,15 @@ func GetRedisClient() *redis.Client {
 	var err error
 
 	addr, err = GetEnv("REDISTOGO_URL")
-	addr = strings.Replace(addr, "redis://redistogo:", "", -1)
 	if err != nil {
 		fmt.Println("Server will use default redis")
 		addr = "localhost:6379"
+	} else {
+		u, err := url.Parse(addr)
+		if err != nil {
+			fmt.Println("url parse error")
+		}
+		addr = u.Host
 	}
 
 	rdb := redis.NewClient(&redis.Options{
