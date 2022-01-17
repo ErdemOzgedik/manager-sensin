@@ -12,7 +12,6 @@ import (
 
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/mux"
-	"github.com/joho/godotenv"
 )
 
 func home(w http.ResponseWriter, r *http.Request) {
@@ -116,11 +115,6 @@ func main() {
 	if err != nil {
 		fmt.Println("Server will use default port")
 		port = "8080"
-	}
-
-	err = godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
 	}
 
 	router := mux.NewRouter().StrictSlash(true)

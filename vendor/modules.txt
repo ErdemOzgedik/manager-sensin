@@ -25,9 +25,6 @@ github.com/golang/snappy
 # github.com/gorilla/mux v1.8.0
 ## explicit; go 1.12
 github.com/gorilla/mux
-# github.com/joho/godotenv v1.4.0
-## explicit; go 1.12
-github.com/joho/godotenv
 # github.com/klauspost/compress v1.13.6
 ## explicit; go 1.15
 github.com/klauspost/compress

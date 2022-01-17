@@ -6,7 +6,6 @@ go 1.17
 require (
 	github.com/go-redis/redis/v8 v8.11.3
 	github.com/gorilla/mux v1.8.0
-	github.com/joho/godotenv v1.4.0
 	go.mongodb.org/mongo-driver v1.8.2
 )
 
