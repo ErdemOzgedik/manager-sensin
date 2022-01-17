@@ -58,7 +58,7 @@ func GetRedisClient() *redis.Client {
 	var err error
 
 	addr, err = GetEnv("REDISTOGO_URL")
-	addr = strings.Replace(addr, "redis://", "", -1)
+	addr = strings.Replace(addr, "redis://redistogo:", "", -1)
 	if err != nil {
 		fmt.Println("Server will use default redis")
 		addr = "localhost:6379"
