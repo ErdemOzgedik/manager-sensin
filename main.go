@@ -86,10 +86,18 @@ func randomPlayer(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	fmt.Println("Server started ...")
+	var port string
+	var err error
+	port, err = helper.GetEnv("PORT")
+	if err != nil {
+		fmt.Println("Server will use default port")
+		port = "8080"
+	}
+
 	router := mux.NewRouter().StrictSlash(true)
 	router.HandleFunc("/", homeLink)
 	router.HandleFunc("/search", searchPlayer).Methods("POST")
 	router.HandleFunc("/random", randomPlayer).Methods("POST")
-	log.Fatal(http.ListenAndServe(":8080", router))
+
+	log.Fatal(http.ListenAndServe(":"+port, router))
 }
