@@ -149,7 +149,9 @@ func SearchByFilter(filter bson.D) ([]constant.Player, error) {
 	if err != nil {
 		return players, err
 	}
-	cursor, err := client.Database(DB).Collection(ISSUES).Find(context.TODO(), filter)
+
+	cursor, err := client.Database(DB).Collection(ISSUES).Find(context.TODO(), filter,
+		options.Find().SetSort(bson.D{{Key: "overall", Value: -1}}))
 	if err != nil {
 		return players, err
 	}
