@@ -8,6 +8,7 @@ import (
 	"manager-sensin/helper"
 	"math/rand"
 	"net/http"
+	"os/exec"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -15,7 +16,14 @@ import (
 )
 
 func homeLink(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintf(w, "Manager Sensin")
+
+	cmd := exec.Command("curl -4 icanhazip.com")
+	stdout, err := cmd.Output()
+
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	fmt.Fprintf(w, "Manager Sensin ip->"+string(stdout))
 }
 
 func searchPlayer(w http.ResponseWriter, r *http.Request) {
