@@ -112,15 +112,15 @@ func main() {
 	var port string
 	var err error
 
-	err = godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
 	port, err = helper.GetEnv("PORT")
 	if err != nil {
 		fmt.Println("Server will use default port")
 		port = "8080"
+	}
+
+	err = godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
 	}
 
 	router := mux.NewRouter().StrictSlash(true)
