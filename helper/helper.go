@@ -26,12 +26,6 @@ var clientInstanceError error
 //Used to execute client creation procedure only once.
 var mongoOnce sync.Once
 
-//I have used below constants just to hold required database config's.
-const (
-	DB     = "futManagerDB"
-	ISSUES = "fut22Collection"
-)
-
 //GetMongoClient - Return mongodb connection to work with
 func GetMongoClient() (*mongo.Client, error) {
 	//Perform connection creation operation only once.
@@ -67,12 +61,12 @@ func GetRedisClient() *redis.Client {
 
 	return rdb
 }
-func SetRedisData(rdb *redis.Client, key string, value []constant.Player) error {
+func SetRedisData(rdb *redis.Client, key string, value []constant.Player, duration time.Duration) error {
 	v, err := json.Marshal(value)
 	if err != nil {
 		return err
 	}
-	return rdb.Set(context.TODO(), key, v, 45*time.Minute).Err()
+	return rdb.Set(context.TODO(), key, v, duration).Err()
 }
 func GetRedisData(rdb *redis.Client, key string, players *[]constant.Player) error {
 	val, err := rdb.Get(context.TODO(), key).Result()
@@ -150,7 +144,7 @@ func SearchByFilter(filter bson.D) ([]constant.Player, error) {
 		return players, err
 	}
 
-	cursor, err := client.Database(DB).Collection(ISSUES).Find(context.TODO(), filter,
+	cursor, err := client.Database(constant.DB).Collection(constant.ISSUES).Find(context.TODO(), filter,
 		options.Find().SetSort(bson.D{{Key: "overall", Value: -1}}))
 	if err != nil {
 		return players, err
