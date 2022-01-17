@@ -54,7 +54,7 @@ func GetMongoClient() (*mongo.Client, error) {
 
 func GetRedisClient() *redis.Client {
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     "redis:6379",
+		Addr:     "localhost:6380",
 		Password: "", // no password set
 		DB:       0,  // use default DB
 	})
