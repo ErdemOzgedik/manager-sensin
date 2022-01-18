@@ -52,7 +52,6 @@ func GetMongoClient() (*mongo.Client, error) {
 
 	return clientInstance, clientInstanceError
 }
-
 func GetRedisClient() *redis.Client {
 	var addr string
 	var err error
@@ -97,7 +96,6 @@ func GenerateRedisKey(filter *constant.Filter) string {
 	return fmt.Sprintf("%s-%s-%s-%s-%s-%v-%v-%v", filter.Name,
 		filter.Club, filter.Nationality, filter.League,
 		filter.Position, filter.Age, filter.Overall, filter.Potential)
-
 }
 func AddFilterViaFields(f *constant.Filter) bson.D {
 	filter := bson.D{}
@@ -173,7 +171,6 @@ func SearchByFilter(filter bson.D) ([]constant.Player, error) {
 
 	return players, err
 }
-
 func GetEnv(key string) (string, error) {
 	val, ok := os.LookupEnv(key)
 	if !ok {

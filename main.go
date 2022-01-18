@@ -106,6 +106,37 @@ func randomPlayer(w http.ResponseWriter, r *http.Request) {
 		Players: []constant.Player{player},
 	})
 }
+func createBuild(w http.ResponseWriter, r *http.Request) {
+	var b constant.Build
+
+	err := json.NewDecoder(r.Body).Decode(&b)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	for _, participant := range b.Participants {
+		fmt.Println(participant.Players)
+	}
+
+	filter := helper.AddFilterViaFields(&b.BuildFilter)
+	players, err := helper.SearchByFilter(filter)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	index := 0
+	for index < 5 {
+		for _, participant := range b.Participants {
+			participant.SetPlayers(&players)
+		}
+		fmt.Println("BUYUTUUU", len(players))
+		index++
+	}
+
+	json.NewEncoder(w).Encode(*(b.Participants[0].Players))
+}
 
 func main() {
 	var port string
@@ -121,6 +152,7 @@ func main() {
 	router.HandleFunc("/", home)
 	router.HandleFunc("/search", searchPlayer).Methods("POST")
 	router.HandleFunc("/random", randomPlayer).Methods("POST")
+	router.HandleFunc("/createBuild", createBuild).Methods("POST")
 
 	log.Fatal(http.ListenAndServe(":"+port, router))
 }

@@ -1,6 +1,10 @@
 package constant
 
 import (
+	"fmt"
+	"math/rand"
+	"time"
+
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -48,9 +52,41 @@ type Response struct {
 	Players []Player `json:"players,omitempty"`
 }
 
+type Participant struct {
+	Name    string `json:"name,omitempty"`
+	Players *map[string]interface{}
+}
+
+type Build struct {
+	Participants []Participant `json:"participants,omitempty"`
+	BuildFilter  Filter        `json:"buildFilter,omitempty"`
+	Version      string
+	Winner       Participant
+}
+
 //I have used below constants just to hold required database config's.
 const (
 	DB         = "futManagerDB"
 	ISSUES     = "fut22Collection"
 	TOPPLAYERS = "topPlayers"
 )
+
+func (p Participant) SetPlayers(players *[]Player) {
+	rand.Seed(time.Now().UnixNano())
+	min := 0
+	max := len(*players)
+	random := rand.Intn(max-min) + min
+
+	a := (*players)[random]
+	fmt.Println(a.LongName)
+
+	if p.Players == nil {
+		fmt.Println("GIRDII")
+		mm := make(map[string]interface{})
+		p.Players = &mm
+	}
+
+	(*p.Players)[a.LongName] = a
+	fmt.Println(p.Players)
+	(*players) = append((*players)[:random], (*players)[random+1:]...)
+}
