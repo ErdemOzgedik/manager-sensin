@@ -108,7 +108,10 @@ func AddFilterViaFields(f *constant.Filter) bson.D {
 			{Key: "$lte", Value: f.Age[1]},
 		}},
 		)
+	} else if len(f.Age) == 1 {
+		filter = append(filter, bson.E{Key: "age", Value: f.Age[0]})
 	}
+
 	if len(f.Name) > 0 {
 		filter = append(filter, bson.E{Key: "long_name", Value: bson.D{
 			{Key: "$regex", Value: primitive.Regex{Pattern: f.Name, Options: "i"}},
@@ -145,14 +148,20 @@ func AddFilterViaFields(f *constant.Filter) bson.D {
 			{Key: "$lte", Value: f.Overall[1]},
 		}},
 		)
+	} else if len(f.Overall) == 1 {
+		filter = append(filter, bson.E{Key: "overall", Value: f.Overall[0]})
 	}
+
 	if len(f.Potential) == 2 {
 		filter = append(filter, bson.E{Key: "potential", Value: bson.D{
 			{Key: "$gte", Value: f.Potential[0]},
 			{Key: "$lte", Value: f.Potential[1]},
 		}},
 		)
+	} else if len(f.Potential) == 1 {
+		filter = append(filter, bson.E{Key: "potential", Value: f.Potential[0]})
 	}
+
 	return filter
 }
 func SearchByFilter(filter bson.D) ([]constant.Player, error) {
