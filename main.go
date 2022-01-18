@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis/v8"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -118,9 +119,13 @@ func main() {
 	}
 
 	router := mux.NewRouter().StrictSlash(true)
-	router.HandleFunc("/", home)
-	router.HandleFunc("/search", searchPlayer).Methods("POST")
-	router.HandleFunc("/random", randomPlayer).Methods("POST")
+	header := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"})
+	methods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS"})
+	origins := handlers.AllowedOrigins([]string{"*"})
 
-	log.Fatal(http.ListenAndServe(":"+port, router))
+	router.HandleFunc("/", home)
+	router.HandleFunc("/search", searchPlayer).Methods("POST", "OPTIONS")
+	router.HandleFunc("/random", randomPlayer).Methods("POST", "OPTIONS")
+
+	log.Fatal(http.ListenAndServe(":"+port, handlers.CORS(header, methods, origins)(router)))
 }
