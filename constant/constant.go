@@ -16,19 +16,19 @@ type Player struct {
 	Age          int                `bson:"age,omitempty"`
 	Overall      int                `bson:"overall,omitempty"`
 	Potential    int                `bson:"potential,omitempty"`
-	// Pace        int                `bson:"pace,omitempty"`
-	// Passing     int                `bson:"passing,omitempty"`
-	// Physic      int                `bson:"physic,omitempty"`
-	// Shooting    int                `bson:"shooting,omitempty"`
-	// Dribbling   int                `bson:"dribbling,omitempty"`
-	// Defending   int                `bson:"defending,omitempty"`
-	FaceUrl    string `bson:"player_face_url,omitempty"`
-	ClubLogo   string `bson:"club_logo_url,omitempty"`
-	NationFlag string `bson:"nation_flag_url,omitempty"`
-	WF         int    `bson:"weak_foot,omitempty"`
-	SM         int    `bson:"skill_moves,omitempty"`
-	WorkRate   string `bson:"work_rate,omitempty"`
-	Foot       string `bson:"preferred_foot,omitempty"`
+	Pace         interface{}        `bson:"pace,omitempty"`
+	Passing      interface{}        `bson:"passing,omitempty"`
+	Physic       interface{}        `bson:"physic,omitempty"`
+	Shooting     interface{}        `bson:"shooting,omitempty"`
+	Dribbling    interface{}        `bson:"dribbling,omitempty"`
+	Defending    interface{}        `bson:"defending,omitempty"`
+	FaceUrl      string             `bson:"player_face_url,omitempty"`
+	ClubLogo     string             `bson:"club_logo_url,omitempty"`
+	NationFlag   string             `bson:"nation_flag_url,omitempty"`
+	WF           int                `bson:"weak_foot,omitempty"`
+	SM           int                `bson:"skill_moves,omitempty"`
+	WorkRate     string             `bson:"work_rate,omitempty"`
+	Foot         string             `bson:"preferred_foot,omitempty"`
 }
 
 type Filter struct {
