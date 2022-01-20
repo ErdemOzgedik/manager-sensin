@@ -4,7 +4,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// User is a struct
 type Player struct {
 	ID           primitive.ObjectID `bson:"_id,omitempty"`
 	LongName     string             `bson:"long_name,omitempty"`
@@ -48,9 +47,56 @@ type Response struct {
 	Players []Player `json:"players,omitempty"`
 }
 
+type Manager struct {
+	ID      primitive.ObjectID `bson:"_id,omitempty"`
+	Name    string             `json:"name,omitempty" bson:"name,omitempty"`
+	Points  int                `bson:"points,omitempty"`
+	Players []Player           `bson:"players,omitempty"`
+	Results []Result           `bson:"results,omitempty"`
+}
+
+type Result struct {
+	ID    primitive.ObjectID `bson:"_id,omitempty"`
+	Home  string             `json:"home,omitempty" bson:"home,omitempty"`
+	Away  string             `json:"away,omitempty" bson:"away,omitempty"`
+	Score []int              `json:"score,omitempty" bson:"score,omitempty"`
+}
+
+type PlayerTransfer struct {
+	Manager string `json:"manager,omitempty"`
+	Player  string `json:"player,omitempty"`
+}
+
 //I have used below constants just to hold required database config's.
 const (
 	DB         = "futManagerDB"
-	ISSUES     = "fut22Collection"
+	PLAYERS    = "fut22Collection"
+	MANAGERS   = "fut22Managers"
 	TOPPLAYERS = "topPlayers"
 )
+
+func (m *Manager) playerExist(playerID primitive.ObjectID) (bool, int) {
+	found := false
+	foundIndex := 0
+	for i, player := range m.Players {
+		if player.ID == playerID {
+			found = true
+			foundIndex = i
+			break
+		}
+	}
+	return found, foundIndex
+}
+
+func (m *Manager) AddPlayer(p Player) {
+	found, _ := m.playerExist(p.ID)
+	if !found {
+		m.Players = append(m.Players, p)
+	}
+}
+func (m *Manager) DeletePlayer(playerID primitive.ObjectID) {
+	found, index := m.playerExist(playerID)
+	if found {
+		m.Players = append(m.Players[:index], m.Players[index+1:]...)
+	}
+}

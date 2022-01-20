@@ -52,7 +52,6 @@ func GetMongoClient() (*mongo.Client, error) {
 
 	return clientInstance, clientInstanceError
 }
-
 func GetRedisClient() *redis.Client {
 	var addr string
 	var err error
@@ -97,7 +96,51 @@ func GenerateRedisKey(filter *constant.Filter) string {
 	return fmt.Sprintf("%s-%s-%s-%s-%s-%v-%v-%v", filter.Name,
 		filter.Club, filter.Nationality, filter.League,
 		filter.Position, filter.Age, filter.Overall, filter.Potential)
+}
 
+// mongo
+func GetSingleResultByID(id primitive.ObjectID, collectionName string) (*mongo.SingleResult, error) {
+	client, err := GetMongoClient()
+	if err != nil {
+		return nil, err
+	}
+
+	return client.Database(constant.DB).Collection(collectionName).FindOne(context.TODO(), bson.M{"_id": id}), nil
+}
+
+//player
+func GetPlayerByID(id primitive.ObjectID) (constant.Player, error) {
+	player := constant.Player{}
+
+	result, err := GetSingleResultByID(id, constant.PLAYERS)
+	if err != nil {
+		return player, err
+	}
+
+	err = result.Decode(&player)
+	if err != nil {
+		return player, err
+	}
+
+	return player, nil
+}
+func SearchPlayerByFilter(filter bson.D) ([]constant.Player, error) {
+	var players []constant.Player
+	client, err := GetMongoClient()
+	if err != nil {
+		return players, err
+	}
+
+	cursor, err := client.Database(constant.DB).Collection(constant.PLAYERS).Find(context.TODO(), filter,
+		options.Find().SetSort(bson.D{{Key: "overall", Value: -1}}))
+	if err != nil {
+		return players, err
+	}
+	if err = cursor.All(context.TODO(), &players); err != nil {
+		return players, err
+	}
+
+	return players, err
 }
 func AddFilterViaFields(f *constant.Filter) bson.D {
 	filter := bson.D{}
@@ -164,25 +207,8 @@ func AddFilterViaFields(f *constant.Filter) bson.D {
 
 	return filter
 }
-func SearchByFilter(filter bson.D) ([]constant.Player, error) {
-	var players []constant.Player
-	client, err := GetMongoClient()
-	if err != nil {
-		return players, err
-	}
 
-	cursor, err := client.Database(constant.DB).Collection(constant.ISSUES).Find(context.TODO(), filter,
-		options.Find().SetSort(bson.D{{Key: "overall", Value: -1}}))
-	if err != nil {
-		return players, err
-	}
-	if err = cursor.All(context.TODO(), &players); err != nil {
-		return players, err
-	}
-
-	return players, err
-}
-
+//
 func GetEnv(key string) (string, error) {
 	val, ok := os.LookupEnv(key)
 	if !ok {
@@ -190,3 +216,80 @@ func GetEnv(key string) (string, error) {
 	}
 	return val, nil
 }
+func CreateCollection(db *mongo.Database, collectionName string) error {
+	collNames, err := db.ListCollectionNames(context.TODO(), bson.D{})
+	if err != nil {
+		return err
+	}
+
+	exist := false
+	for _, coll := range collNames {
+		if coll == collectionName {
+			exist = true
+			break
+		}
+	}
+
+	if !exist {
+		db.CreateCollection(context.TODO(), collectionName)
+	}
+
+	return nil
+}
+
+//crud opt for manager
+func CreateManager(manager constant.Manager) error {
+	client, err := GetMongoClient()
+	if err != nil {
+		return err
+	}
+
+	db := client.Database(constant.DB)
+	err = CreateCollection(db, constant.MANAGERS)
+	if err != nil {
+		return err
+	}
+
+	doc, err := db.Collection(constant.MANAGERS).InsertOne(context.TODO(), bson.D{
+		{Key: "name", Value: manager.Name},
+		{Key: "players", Value: bson.A{}},
+		{Key: "points", Value: 0},
+		{Key: "results", Value: bson.A{}},
+	})
+	if err != nil {
+		return err
+	}
+	fmt.Println("Manager added to collection", doc.InsertedID)
+	return nil
+}
+func GetManagerByID(id primitive.ObjectID) (constant.Manager, error) {
+	manager := constant.Manager{}
+
+	result, err := GetSingleResultByID(id, constant.MANAGERS)
+	if err != nil {
+		return manager, err
+	}
+
+	err = result.Decode(&manager)
+	if err != nil {
+		return manager, err
+	}
+
+	return manager, nil
+}
+func UpdateManager(man *constant.Manager) (*mongo.UpdateResult, error) {
+	result := &mongo.UpdateResult{}
+	client, err := GetMongoClient()
+	if err != nil {
+		return result, err
+	}
+
+	result, err = client.Database(constant.DB).Collection(constant.MANAGERS).ReplaceOne(context.TODO(), bson.M{"_id": man.ID}, man)
+	if err != nil {
+		return result, err
+	}
+
+	return result, nil
+}
+
+//
