@@ -296,16 +296,17 @@ func CreateCollection(db *mongo.Database, collectionName string) error {
 }
 
 //crud opt for manager
-func CreateManager(manager constant.Manager) error {
+func CreateManager(manager constant.Manager) (constant.Insert, error) {
+	insert := constant.Insert{}
 	client, err := GetMongoClient()
 	if err != nil {
-		return err
+		return insert, err
 	}
 
 	db := client.Database(constant.DB)
 	err = CreateCollection(db, constant.MANAGERS)
 	if err != nil {
-		return err
+		return insert, err
 	}
 
 	doc, err := db.Collection(constant.MANAGERS).InsertOne(context.TODO(), bson.D{
@@ -315,10 +316,20 @@ func CreateManager(manager constant.Manager) error {
 		{Key: "results", Value: bson.A{}},
 	})
 	if err != nil {
-		return err
+		return insert, err
 	}
-	fmt.Println("Manager added to collection", doc.InsertedID)
-	return nil
+
+	docByte, err := json.Marshal(doc)
+	if err != nil {
+		return insert, err
+	}
+
+	err = json.Unmarshal(docByte, &insert)
+	if err != nil {
+		return insert, err
+	}
+
+	return insert, nil
 }
 func GetManagerByID(id primitive.ObjectID) (constant.Manager, error) {
 	manager := constant.Manager{}
@@ -350,4 +361,71 @@ func UpdateManager(man *constant.Manager) (*mongo.UpdateResult, error) {
 	return result, nil
 }
 
-//
+//manager-end
+
+//crud opt for season
+func CreateSeason(season constant.Season) (constant.Insert, error) {
+	insert := constant.Insert{}
+	client, err := GetMongoClient()
+	if err != nil {
+		return insert, err
+	}
+
+	db := client.Database(constant.DB)
+	err = CreateCollection(db, constant.SEASONS)
+	if err != nil {
+		return insert, err
+	}
+
+	doc, err := db.Collection(constant.SEASONS).InsertOne(context.TODO(), bson.D{
+		{Key: "type", Value: season.Type},
+		{Key: "title", Value: season.Title},
+		{Key: "results", Value: bson.A{}},
+	})
+	if err != nil {
+		return insert, err
+	}
+
+	docByte, err := json.Marshal(doc)
+	if err != nil {
+		return insert, err
+	}
+
+	err = json.Unmarshal(docByte, &insert)
+	if err != nil {
+		return insert, err
+	}
+
+	return insert, nil
+}
+func GetSeasonByID(id primitive.ObjectID) (constant.Season, error) {
+	season := constant.Season{}
+
+	result, err := GetSingleResultByID(id, constant.SEASONS)
+	if err != nil {
+		return season, err
+	}
+
+	err = result.Decode(&season)
+	if err != nil {
+		return season, err
+	}
+
+	return season, nil
+}
+func UpdateSeason(season *constant.Season) (*mongo.UpdateResult, error) {
+	result := &mongo.UpdateResult{}
+	client, err := GetMongoClient()
+	if err != nil {
+		return result, err
+	}
+
+	result, err = client.Database(constant.DB).Collection(constant.SEASONS).ReplaceOne(context.TODO(), bson.M{"_id": season.ID}, season)
+	if err != nil {
+		return result, err
+	}
+
+	return result, nil
+}
+
+//season-end

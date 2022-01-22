@@ -56,10 +56,24 @@ type Manager struct {
 }
 
 type Result struct {
-	ID    primitive.ObjectID `bson:"_id,omitempty"`
-	Home  string             `json:"home,omitempty" bson:"home,omitempty"`
-	Away  string             `json:"away,omitempty" bson:"away,omitempty"`
-	Score []int              `json:"score,omitempty" bson:"score,omitempty"`
+	ID      primitive.ObjectID `bson:"_id,omitempty"`
+	Season  string             `json:"season,omitempty" bson:"season,omitempty"`
+	Home    string             `json:"home,omitempty" bson:"home,omitempty"`
+	Away    string             `json:"away,omitempty" bson:"away,omitempty"`
+	Score   []int              `json:"score,omitempty" bson:"score,omitempty"`
+	Scorers []Scorer           `json:"scorer,omitempty" bson:"scorer,omitempty"`
+}
+
+type Season struct {
+	ID      primitive.ObjectID `bson:"_id,omitempty"`
+	Type    string             `json:"type,omitempty" bson:"type,omitempty"`
+	Title   string             `json:"title,omitempty" bson:"title,omitempty"`
+	Results []Result           `bson:"results,omitempty"`
+}
+
+type Scorer struct {
+	Player  string `json:"season,omitempty"`
+	Manager string `json:"manager,omitempty"`
 }
 
 type PlayerTransfer struct {
@@ -67,15 +81,21 @@ type PlayerTransfer struct {
 	Player  string `json:"player,omitempty"`
 }
 
+type Insert struct {
+	InsertedID primitive.ObjectID
+}
+
 //I have used below constants just to hold required database config's.
 const (
 	DB                = "futManagerDB"
 	PLAYERS           = "fut22Collection"
 	MANAGERS          = "fut22Managers"
+	SEASONS           = "fut22Seasons"
 	TOPPLAYERS        = "topPlayers"
 	RANDOMPLAYERLIMIT = 68
 )
 
+// manager-start
 func (m *Manager) playerExist(playerID primitive.ObjectID) (bool, int) {
 	found := false
 	foundIndex := 0
@@ -88,7 +108,6 @@ func (m *Manager) playerExist(playerID primitive.ObjectID) (bool, int) {
 	}
 	return found, foundIndex
 }
-
 func (m *Manager) AddPlayer(p Player) {
 	found, _ := m.playerExist(p.ID)
 	if !found {
@@ -101,3 +120,5 @@ func (m *Manager) DeletePlayer(playerID primitive.ObjectID) {
 		m.Players = append(m.Players[:index], m.Players[index+1:]...)
 	}
 }
+
+// manager-end

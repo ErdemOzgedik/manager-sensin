@@ -15,6 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// player-start
 func home(w http.ResponseWriter, r *http.Request) {
 	var players []constant.Player
 	pool := helper.GetRedisPool()
@@ -136,6 +137,9 @@ func randomPlayer(w http.ResponseWriter, r *http.Request) {
 		Players: []constant.Player{player},
 	})
 }
+
+// player-end
+// manager-start
 func createManager(w http.ResponseWriter, r *http.Request) {
 	var t constant.Manager
 	err := json.NewDecoder(r.Body).Decode(&t)
@@ -144,11 +148,21 @@ func createManager(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	helper.CreateManager(t)
+	insert, err := helper.CreateManager(t)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	manager, err := helper.GetManagerByID(insert.InsertedID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Manager created!!!"))
+	json.NewEncoder(w).Encode(manager)
 }
 func addPlayer(w http.ResponseWriter, r *http.Request) {
 	var pt constant.PlayerTransfer
@@ -235,6 +249,9 @@ func deletePlayer(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(manager)
 }
+
+// manager-end
+// redis-start-end
 func cleanRedis(w http.ResponseWriter, r *http.Request) {
 	err := helper.DeteleRedisKeys()
 	if err != nil {
@@ -243,6 +260,32 @@ func cleanRedis(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	http.Error(w, "Redis data removed!!!", http.StatusOK)
+}
+
+// season-start-en
+func createSeason(w http.ResponseWriter, r *http.Request) {
+	var s constant.Season
+	err := json.NewDecoder(r.Body).Decode(&s)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	insert, err := helper.CreateSeason(s)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	season, err := helper.GetSeasonByID(insert.InsertedID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(season)
 }
 
 func main() {
@@ -271,6 +314,9 @@ func main() {
 
 	//redis endpoints
 	router.HandleFunc("/cleanRedis", cleanRedis).Methods("GET")
+
+	//season endpoints
+	router.HandleFunc("/createSeason", createSeason).Methods("POST", "OPTIONS")
 
 	log.Fatal(http.ListenAndServe(":"+port, handlers.CORS(header, methods, origins)(router)))
 }
