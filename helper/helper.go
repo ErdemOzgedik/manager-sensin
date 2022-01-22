@@ -429,3 +429,41 @@ func UpdateSeason(season *constant.Season) (*mongo.UpdateResult, error) {
 }
 
 //season-end
+
+//result-locig-start
+func CreateResult(result constant.Result) (constant.Insert, error) {
+	insert := constant.Insert{}
+	client, err := GetMongoClient()
+	if err != nil {
+		return insert, err
+	}
+
+	db := client.Database(constant.DB)
+	err = CreateCollection(db, constant.RESULTS)
+	if err != nil {
+		return insert, err
+	}
+
+	doc, err := db.Collection(constant.RESULTS).InsertOne(context.TODO(), bson.D{
+		{Key: "season", Value: result.Season},
+		{Key: "home", Value: result.Home},
+		{Key: "away", Value: result.Away},
+		{Key: "score", Value: result.Score},
+		{Key: "scorer", Value: result.Scorers},
+	})
+	if err != nil {
+		return insert, err
+	}
+
+	docByte, err := json.Marshal(doc)
+	if err != nil {
+		return insert, err
+	}
+
+	err = json.Unmarshal(docByte, &insert)
+	if err != nil {
+		return insert, err
+	}
+
+	return insert, nil
+}

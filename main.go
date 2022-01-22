@@ -288,6 +288,75 @@ func createSeason(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(season)
 }
 
+// result-start-en
+func resultLogic(w http.ResponseWriter, r *http.Request) {
+	var result constant.Result
+	err := json.NewDecoder(r.Body).Decode(&result)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	insert, err := helper.CreateResult(result)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	result.ID = insert.InsertedID
+
+	//managerlerin result update et duzelt bunu kotu kod
+	homeID, err := primitive.ObjectIDFromHex(result.Home)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	homeManager, err := helper.GetManagerByID(homeID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	homeManager.AddResult(result)
+	_, err = helper.UpdateManager(&homeManager)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	awayID, err := primitive.ObjectIDFromHex(result.Away)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	awayManager, err := helper.GetManagerByID(awayID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	awayManager.AddResult(result)
+	_, err = helper.UpdateManager(&awayManager)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	//season result update et
+	seasonID, err := primitive.ObjectIDFromHex(result.Season)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	season, err := helper.GetSeasonByID(seasonID)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	season.AddResult(result)
+	_, err = helper.UpdateSeason(&season)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+}
+
 func main() {
 	var port string
 	var err error
@@ -317,6 +386,9 @@ func main() {
 
 	//season endpoints
 	router.HandleFunc("/createSeason", createSeason).Methods("POST", "OPTIONS")
+
+	//result endpoint
+	router.HandleFunc("/result", resultLogic).Methods("POST", "OPTIONS")
 
 	log.Fatal(http.ListenAndServe(":"+port, handlers.CORS(header, methods, origins)(router)))
 }

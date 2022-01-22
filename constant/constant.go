@@ -91,11 +91,12 @@ const (
 	PLAYERS           = "fut22Collection"
 	MANAGERS          = "fut22Managers"
 	SEASONS           = "fut22Seasons"
+	RESULTS           = "fut22Results"
 	TOPPLAYERS        = "topPlayers"
 	RANDOMPLAYERLIMIT = 68
 )
 
-// manager-start
+//manager-logic
 func (m *Manager) playerExist(playerID primitive.ObjectID) (bool, int) {
 	found := false
 	foundIndex := 0
@@ -121,4 +122,11 @@ func (m *Manager) DeletePlayer(playerID primitive.ObjectID) {
 	}
 }
 
-// manager-end
+func (m *Manager) AddResult(r Result) {
+	m.Results = append(m.Results, r)
+}
+
+//season-logic
+func (s *Season) AddResult(r Result) {
+	s.Results = append(s.Results, r)
+}
