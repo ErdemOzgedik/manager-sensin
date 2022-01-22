@@ -55,13 +55,22 @@ type Manager struct {
 	Results []Result           `bson:"results,omitempty"`
 }
 
+// guzel bir struct donmem lazim dusunnnn
 type Result struct {
 	ID      primitive.ObjectID `bson:"_id,omitempty"`
 	Season  string             `json:"season,omitempty" bson:"season,omitempty"`
-	Home    string             `json:"home,omitempty" bson:"home,omitempty"`
-	Away    string             `json:"away,omitempty" bson:"away,omitempty"`
+	Home    Manager            `json:"home,omitempty" bson:"home,omitempty"`
+	Away    Manager            `json:"away,omitempty" bson:"away,omitempty"`
 	Score   []int              `json:"score,omitempty" bson:"score,omitempty"`
 	Scorers []Scorer           `json:"scorer,omitempty" bson:"scorer,omitempty"`
+}
+
+type ResultRequest struct {
+	Season  string          `json:"season,omitempty"`
+	Home    string          `json:"home,omitempty"`
+	Away    string          `json:"away,omitempty"`
+	Score   []int           `json:"score,omitempty"`
+	Scorers []ScorerRequest `json:"scorer,omitempty"`
 }
 
 type Season struct {
@@ -72,8 +81,15 @@ type Season struct {
 }
 
 type Scorer struct {
-	Player  string `json:"season,omitempty"`
+	Player  Player  `json:"player,omitempty"`
+	Manager Manager `json:"manager,omitempty"`
+	Count   int     `json:"count,omitempty"`
+}
+
+type ScorerRequest struct {
+	Player  string `json:"player,omitempty"`
 	Manager string `json:"manager,omitempty"`
+	Count   int    `json:"count,omitempty"`
 }
 
 type PlayerTransfer struct {

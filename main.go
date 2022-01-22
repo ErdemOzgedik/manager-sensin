@@ -290,22 +290,14 @@ func createSeason(w http.ResponseWriter, r *http.Request) {
 
 // result-start-en
 func resultLogic(w http.ResponseWriter, r *http.Request) {
-	var result constant.Result
-	err := json.NewDecoder(r.Body).Decode(&result)
+	var resultRequest constant.ResultRequest
+	err := json.NewDecoder(r.Body).Decode(&resultRequest)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	insert, err := helper.CreateResult(result)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	result.ID = insert.InsertedID
-
-	//managerlerin result update et duzelt bunu kotu kod
-	homeID, err := primitive.ObjectIDFromHex(result.Home)
+	homeID, err := primitive.ObjectIDFromHex(resultRequest.Home)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -315,13 +307,7 @@ func resultLogic(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	homeManager.AddResult(result)
-	_, err = helper.UpdateManager(&homeManager)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	awayID, err := primitive.ObjectIDFromHex(result.Away)
+	awayID, err := primitive.ObjectIDFromHex(resultRequest.Away)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -331,14 +317,7 @@ func resultLogic(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	awayManager.AddResult(result)
-	_, err = helper.UpdateManager(&awayManager)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	//season result update et
-	seasonID, err := primitive.ObjectIDFromHex(result.Season)
+	seasonID, err := primitive.ObjectIDFromHex(resultRequest.Season)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -348,6 +327,35 @@ func resultLogic(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	result := constant.Result{
+		Season: resultRequest.Season,
+		Home:   homeManager,
+		Away:   awayManager,
+		Score:  resultRequest.Score,
+	}
+
+	insert, err := helper.CreateResult(result)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	result.ID = insert.InsertedID
+
+	homeManager.AddResult(result)
+	_, err = helper.UpdateManager(&homeManager)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	awayManager.AddResult(result)
+	_, err = helper.UpdateManager(&awayManager)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
 	season.AddResult(result)
 	_, err = helper.UpdateSeason(&season)
 	if err != nil {
@@ -355,6 +363,9 @@ func resultLogic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(result)
 }
 
 func main() {
