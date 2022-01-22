@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -18,9 +17,21 @@ import (
 
 func home(w http.ResponseWriter, r *http.Request) {
 	var players []constant.Player
-	rdb := helper.GetRedisClient()
-	err := helper.GetRedisData(rdb, constant.TOPPLAYERS, &players)
-	if err == redis.Nil {
+	pool := helper.GetRedisPool()
+
+	exists, err := helper.CheckRedisData(pool, constant.TOPPLAYERS)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if exists {
+		err := helper.GetRedisData(pool, constant.TOPPLAYERS, &players)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	} else {
 		filter := helper.AddFilterViaFields(&constant.Filter{
 			Overall: []int{87, 99},
 		})
@@ -29,14 +40,15 @@ func home(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		helper.SetRedisData(rdb, constant.TOPPLAYERS, players, 0)
-	} else if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
+		err = helper.SetRedisData(pool, constant.TOPPLAYERS, players, 0)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(constant.Response{
 		Count:   len(players),
 		Players: players,
@@ -59,7 +71,7 @@ func searchPlayer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(constant.Response{
 		Count:   len(players),
 		Players: players,
@@ -77,38 +89,53 @@ func randomPlayer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	key := helper.GenerateRedisKey(&f)
-	rdb := helper.GetRedisClient()
-	err = helper.GetRedisData(rdb, key, &players)
-	if err == redis.Nil {
+	pool := helper.GetRedisPool()
+	exists, err := helper.CheckRedisData(pool, key)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if exists {
+		err = helper.GetRedisData(pool, key, &players)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	} else {
 		filter := helper.AddFilterViaFields(&f)
 		players, err = helper.SearchPlayerByFilter(filter)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-	} else if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
 	}
 
-	if len(players) > 0 {
+	if len(players) > constant.RANDOMPLAYERLIMIT {
 		rand.Seed(time.Now().UnixNano())
 		min := 0
 		max := len(players)
 		random := rand.Intn(max-min) + min
 		player = players[random]
 		players = append(players[:random], players[random+1:]...)
-		helper.SetRedisData(rdb, key, players, 45*time.Minute)
+
+		err = helper.SetRedisData(pool, key, players, 45*time.Minute)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	} else {
+		http.Error(w, "Change filter to use random api", http.StatusBadRequest)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(constant.Response{
 		Count:   len(players),
 		Players: []constant.Player{player},
 	})
 }
-
 func createManager(w http.ResponseWriter, r *http.Request) {
 	var t constant.Manager
 	err := json.NewDecoder(r.Body).Decode(&t)
@@ -123,7 +150,6 @@ func createManager(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	w.Write([]byte("Manager created!!!"))
 }
-
 func addPlayer(w http.ResponseWriter, r *http.Request) {
 	var pt constant.PlayerTransfer
 
@@ -169,7 +195,6 @@ func addPlayer(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(manager)
 }
-
 func deletePlayer(w http.ResponseWriter, r *http.Request) {
 	var pt constant.PlayerTransfer
 
@@ -210,6 +235,15 @@ func deletePlayer(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(manager)
 }
+func cleanRedis(w http.ResponseWriter, r *http.Request) {
+	err := helper.DeteleRedisKeys()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	http.Error(w, "Redis data removed!!!", http.StatusOK)
+}
 
 func main() {
 	var port string
@@ -234,6 +268,9 @@ func main() {
 	router.HandleFunc("/createManager", createManager).Methods("POST", "OPTIONS")
 	router.HandleFunc("/addPlayer", addPlayer).Methods("POST", "OPTIONS")
 	router.HandleFunc("/deletePlayer", deletePlayer).Methods("POST", "OPTIONS")
+
+	//redis endpoints
+	router.HandleFunc("/cleanRedis", cleanRedis).Methods("GET")
 
 	log.Fatal(http.ListenAndServe(":"+port, handlers.CORS(header, methods, origins)(router)))
 }

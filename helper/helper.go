@@ -10,7 +10,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/gomodule/redigo/redis"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -52,7 +52,9 @@ func GetMongoClient() (*mongo.Client, error) {
 
 	return clientInstance, clientInstanceError
 }
-func GetRedisClient() *redis.Client {
+
+// redis-start
+func GetRedisPool() *redis.Pool {
 	var addr string
 	var err error
 	var pass string
@@ -70,33 +72,88 @@ func GetRedisClient() *redis.Client {
 		pass, _ = u.User.Password()
 	}
 
-	rdb := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		Password: pass, // no password set
-		DB:       0,    // use default DB
-	})
+	return &redis.Pool{
+		MaxIdle:     10,
+		IdleTimeout: 240 * time.Second,
+		Dial: func() (redis.Conn, error) {
+			return redis.Dial("tcp", addr, redis.DialPassword(pass))
+		},
+		TestOnBorrow: func(c redis.Conn, t time.Time) error {
+			_, err := c.Do("PING")
+			return err
+		},
+	}
+}
+func SetRedisData(pool *redis.Pool, key string, players []constant.Player, duration time.Duration) error {
+	conn := pool.Get()
+	defer conn.Close()
 
-	return rdb
-}
-func SetRedisData(rdb *redis.Client, key string, value []constant.Player, duration time.Duration) error {
-	v, err := json.Marshal(value)
+	value, err := json.Marshal(players)
 	if err != nil {
 		return err
 	}
-	return rdb.Set(context.TODO(), key, v, duration).Err()
-}
-func GetRedisData(rdb *redis.Client, key string, players *[]constant.Player) error {
-	val, err := rdb.Get(context.TODO(), key).Result()
-	if err != nil {
-		return err
+
+	if duration.Seconds() == 0 {
+		err = conn.Send("SET", key, string(value))
+		if err != nil {
+			return err
+		}
+	} else {
+		err = conn.Send("SET", key, string(value), "EX", duration.Seconds())
+		if err != nil {
+			return err
+		}
 	}
-	return json.Unmarshal([]byte(val), &players)
+
+	return nil
+}
+func GetRedisData(pool *redis.Pool, key string, players *[]constant.Player) error {
+	conn := pool.Get()
+	defer conn.Close()
+
+	data, err := redis.Bytes(conn.Do("GET", key))
+	if err != nil {
+		return fmt.Errorf("error getting key %s: %v", key, err)
+	}
+
+	return json.Unmarshal(data, &players)
+}
+func CheckRedisData(pool *redis.Pool, key string) (bool, error) {
+	conn := pool.Get()
+	defer conn.Close()
+
+	ok, err := redis.Bool(conn.Do("EXISTS", key))
+	if err != nil {
+		return ok, fmt.Errorf("error checking if key %s exists: %v", key, err)
+	}
+
+	return ok, err
 }
 func GenerateRedisKey(filter *constant.Filter) string {
 	return fmt.Sprintf("%s-%s-%s-%s-%s-%v-%v-%v", filter.Name,
 		filter.Club, filter.Nationality, filter.League,
 		filter.Position, filter.Age, filter.Overall, filter.Potential)
 }
+func DeteleRedisKeys() error {
+	pool := GetRedisPool()
+	conn := pool.Get()
+	defer conn.Close()
+
+	keys, err := redis.Strings(conn.Do("KEYS", "*"))
+	if err != nil {
+		return err
+	}
+
+	for _, key := range keys {
+		_, err := conn.Do("DEL", key)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// redis-end
 
 // mongo
 func GetSingleResultByID(id primitive.ObjectID, collectionName string) (*mongo.SingleResult, error) {
@@ -108,7 +165,7 @@ func GetSingleResultByID(id primitive.ObjectID, collectionName string) (*mongo.S
 	return client.Database(constant.DB).Collection(collectionName).FindOne(context.TODO(), bson.M{"_id": id}), nil
 }
 
-//player
+// player-start
 func GetPlayerByID(id primitive.ObjectID) (constant.Player, error) {
 	player := constant.Player{}
 
@@ -208,7 +265,8 @@ func AddFilterViaFields(f *constant.Filter) bson.D {
 	return filter
 }
 
-//
+// player-end
+
 func GetEnv(key string) (string, error) {
 	val, ok := os.LookupEnv(key)
 	if !ok {

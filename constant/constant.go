@@ -69,10 +69,11 @@ type PlayerTransfer struct {
 
 //I have used below constants just to hold required database config's.
 const (
-	DB         = "futManagerDB"
-	PLAYERS    = "fut22Collection"
-	MANAGERS   = "fut22Managers"
-	TOPPLAYERS = "topPlayers"
+	DB                = "futManagerDB"
+	PLAYERS           = "fut22Collection"
+	MANAGERS          = "fut22Managers"
+	TOPPLAYERS        = "topPlayers"
+	RANDOMPLAYERLIMIT = 68
 )
 
 func (m *Manager) playerExist(playerID primitive.ObjectID) (bool, int) {
