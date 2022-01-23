@@ -448,8 +448,13 @@ func CreateResult(result constant.Result) (constant.Insert, error) {
 		{Key: "season", Value: result.Season},
 		{Key: "home", Value: result.Home},
 		{Key: "away", Value: result.Away},
+		{Key: "seasonType", Value: result.SeasonType},
+		{Key: "seasonTitle", Value: result.SeasonTitle},
+		{Key: "homeManager", Value: result.HomeManager},
+		{Key: "awayManager", Value: result.AwayManager},
 		{Key: "score", Value: result.Score},
-		{Key: "scorer", Value: result.Scorers},
+		{Key: "homescorers", Value: result.HomeScorers},
+		{Key: "awayscorers", Value: result.AwayScorers},
 	})
 	if err != nil {
 		return insert, err

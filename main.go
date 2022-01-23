@@ -328,11 +328,43 @@ func resultLogic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	homeScorers := &[]constant.Scorer{}
+	awayScorers := &[]constant.Scorer{}
+	for _, scorer := range resultRequest.Scorers {
+		if scorer.Manager == homeManager.ID.Hex() {
+			for _, player := range homeManager.Players {
+				if scorer.Player == player.ID.Hex() {
+					*homeScorers = append(*homeScorers, constant.Scorer{
+						Player: player,
+						Count:  scorer.Count,
+					})
+					break
+				}
+			}
+		} else {
+			for _, player := range awayManager.Players {
+				if scorer.Player == player.ID.Hex() {
+					*awayScorers = append(*awayScorers, constant.Scorer{
+						Player: player,
+						Count:  scorer.Count,
+					})
+					break
+				}
+			}
+		}
+	}
+
 	result := constant.Result{
-		Season: resultRequest.Season,
-		Home:   homeManager,
-		Away:   awayManager,
-		Score:  resultRequest.Score,
+		Season:      resultRequest.Season,
+		Home:        resultRequest.Home,
+		Away:        resultRequest.Away,
+		SeasonType:  season.Type,
+		SeasonTitle: season.Title,
+		HomeManager: homeManager.Name,
+		AwayManager: awayManager.Name,
+		Score:       resultRequest.Score,
+		HomeScorers: *homeScorers,
+		AwayScorers: *awayScorers,
 	}
 
 	insert, err := helper.CreateResult(result)

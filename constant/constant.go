@@ -57,12 +57,17 @@ type Manager struct {
 
 // guzel bir struct donmem lazim dusunnnn
 type Result struct {
-	ID      primitive.ObjectID `bson:"_id,omitempty"`
-	Season  string             `json:"season,omitempty" bson:"season,omitempty"`
-	Home    Manager            `json:"home,omitempty" bson:"home,omitempty"`
-	Away    Manager            `json:"away,omitempty" bson:"away,omitempty"`
-	Score   []int              `json:"score,omitempty" bson:"score,omitempty"`
-	Scorers []Scorer           `json:"scorer,omitempty" bson:"scorer,omitempty"`
+	ID          primitive.ObjectID `bson:"_id,omitempty"`
+	Season      string             `json:"season,omitempty" bson:"season,omitempty"`
+	Home        string             `json:"home,omitempty" bson:"home,omitempty"`
+	Away        string             `json:"away,omitempty" bson:"away,omitempty"`
+	SeasonType  string             `json:"seasonType,omitempty" bson:"seasonType,omitempty"`
+	SeasonTitle string             `json:"seasonTitle,omitempty" bson:"seasonTitle,omitempty"`
+	HomeManager string             `json:"homeManager,omitempty" bson:"homeManager,omitempty"`
+	AwayManager string             `json:"awayManager,omitempty" bson:"awayManager,omitempty"`
+	Score       []int              `json:"score,omitempty" bson:"score,omitempty"`
+	HomeScorers []Scorer           `json:"homescorers,omitempty" bson:"homescorers,omitempty"`
+	AwayScorers []Scorer           `json:"awayscorers,omitempty" bson:"awayscorers,omitempty"`
 }
 
 type ResultRequest struct {
@@ -81,9 +86,8 @@ type Season struct {
 }
 
 type Scorer struct {
-	Player  Player  `json:"player,omitempty"`
-	Manager Manager `json:"manager,omitempty"`
-	Count   int     `json:"count,omitempty"`
+	Player Player `json:"player,omitempty"`
+	Count  int    `json:"count,omitempty"`
 }
 
 type ScorerRequest struct {
