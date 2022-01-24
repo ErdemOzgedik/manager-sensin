@@ -166,10 +166,14 @@ func GetSingleResultByID(id primitive.ObjectID, collectionName string) (*mongo.S
 }
 
 // player-start
-func GetPlayerByID(id primitive.ObjectID) (constant.Player, error) {
+func GetPlayerByID(id string) (constant.Player, error) {
 	player := constant.Player{}
 
-	result, err := GetSingleResultByID(id, constant.PLAYERS)
+	playerID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return player, err
+	}
+	result, err := GetSingleResultByID(playerID, constant.PLAYERS)
 	if err != nil {
 		return player, err
 	}
@@ -331,10 +335,14 @@ func CreateManager(manager constant.Manager) (constant.Insert, error) {
 
 	return insert, nil
 }
-func GetManagerByID(id primitive.ObjectID) (constant.Manager, error) {
+func GetManagerByID(id string) (constant.Manager, error) {
 	manager := constant.Manager{}
 
-	result, err := GetSingleResultByID(id, constant.MANAGERS)
+	managerID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return manager, err
+	}
+	result, err := GetSingleResultByID(managerID, constant.MANAGERS)
 	if err != nil {
 		return manager, err
 	}
@@ -398,10 +406,14 @@ func CreateSeason(season constant.Season) (constant.Insert, error) {
 
 	return insert, nil
 }
-func GetSeasonByID(id primitive.ObjectID) (constant.Season, error) {
+func GetSeasonByID(id string) (constant.Season, error) {
 	season := constant.Season{}
 
-	result, err := GetSingleResultByID(id, constant.SEASONS)
+	seasonID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return season, err
+	}
+	result, err := GetSingleResultByID(seasonID, constant.SEASONS)
 	if err != nil {
 		return season, err
 	}

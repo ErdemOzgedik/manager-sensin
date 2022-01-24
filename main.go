@@ -154,7 +154,7 @@ func createManager(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	manager, err := helper.GetManagerByID(insert.InsertedID)
+	manager, err := helper.GetManagerByID(insert.InsertedID.Hex())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -173,24 +173,13 @@ func addPlayer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	managerID, err := primitive.ObjectIDFromHex(pt.Manager)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	playerID, err := primitive.ObjectIDFromHex(pt.Player)
+	manager, err := helper.GetManagerByID(pt.Manager)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	manager, err := helper.GetManagerByID(managerID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	player, err := helper.GetPlayerByID(playerID)
+	player, err := helper.GetPlayerByID(pt.Player)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -218,19 +207,13 @@ func deletePlayer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	managerID, err := primitive.ObjectIDFromHex(pt.Manager)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
 	playerID, err := primitive.ObjectIDFromHex(pt.Player)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	manager, err := helper.GetManagerByID(managerID)
+	manager, err := helper.GetManagerByID(pt.Manager)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -277,7 +260,7 @@ func createSeason(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	season, err := helper.GetSeasonByID(insert.InsertedID)
+	season, err := helper.GetSeasonByID(insert.InsertedID.Hex())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -297,37 +280,27 @@ func resultLogic(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	homeID, err := primitive.ObjectIDFromHex(resultRequest.Home)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	homeManager, err := helper.GetManagerByID(homeID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	awayID, err := primitive.ObjectIDFromHex(resultRequest.Away)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	awayManager, err := helper.GetManagerByID(awayID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	seasonID, err := primitive.ObjectIDFromHex(resultRequest.Season)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	season, err := helper.GetSeasonByID(seasonID)
+	//getByID interface ver parametre refactor taski
+	//Concurrency her get icin 3 defa dbyi bekliyoz
+	homeManager, err := helper.GetManagerByID(resultRequest.Home)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
+	awayManager, err := helper.GetManagerByID(resultRequest.Away)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	season, err := helper.GetSeasonByID(resultRequest.Season)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	//method yap refactor taski
 	homeScorers := &[]constant.Scorer{}
 	awayScorers := &[]constant.Scorer{}
 	for _, scorer := range resultRequest.Scorers {
