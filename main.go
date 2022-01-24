@@ -15,6 +15,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+// player-start
 func home(w http.ResponseWriter, r *http.Request) {
 	var players []constant.Player
 	pool := helper.GetRedisPool()
@@ -136,6 +137,9 @@ func randomPlayer(w http.ResponseWriter, r *http.Request) {
 		Players: []constant.Player{player},
 	})
 }
+
+// player-end
+// manager-start
 func createManager(w http.ResponseWriter, r *http.Request) {
 	var t constant.Manager
 	err := json.NewDecoder(r.Body).Decode(&t)
@@ -144,11 +148,21 @@ func createManager(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	helper.CreateManager(t)
+	insert, err := helper.CreateManager(t)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	manager, err := helper.GetManagerByID(insert.InsertedID.Hex())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("Manager created!!!"))
+	json.NewEncoder(w).Encode(manager)
 }
 func addPlayer(w http.ResponseWriter, r *http.Request) {
 	var pt constant.PlayerTransfer
@@ -159,24 +173,13 @@ func addPlayer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	managerID, err := primitive.ObjectIDFromHex(pt.Manager)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	playerID, err := primitive.ObjectIDFromHex(pt.Player)
+	manager, err := helper.GetManagerByID(pt.Manager)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	manager, err := helper.GetManagerByID(managerID)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	player, err := helper.GetPlayerByID(playerID)
+	player, err := helper.GetPlayerByID(pt.Player)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -204,19 +207,13 @@ func deletePlayer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	managerID, err := primitive.ObjectIDFromHex(pt.Manager)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
 	playerID, err := primitive.ObjectIDFromHex(pt.Player)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	manager, err := helper.GetManagerByID(managerID)
+	manager, err := helper.GetManagerByID(pt.Manager)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -235,6 +232,9 @@ func deletePlayer(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(manager)
 }
+
+// manager-end
+// redis-start-end
 func cleanRedis(w http.ResponseWriter, r *http.Request) {
 	err := helper.DeteleRedisKeys()
 	if err != nil {
@@ -243,6 +243,134 @@ func cleanRedis(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Content-Type", "application/json")
 	http.Error(w, "Redis data removed!!!", http.StatusOK)
+}
+
+// season-start-en
+func createSeason(w http.ResponseWriter, r *http.Request) {
+	var s constant.Season
+	err := json.NewDecoder(r.Body).Decode(&s)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	insert, err := helper.CreateSeason(s)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	season, err := helper.GetSeasonByID(insert.InsertedID.Hex())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(season)
+}
+
+// result-start-en
+func resultLogic(w http.ResponseWriter, r *http.Request) {
+	var resultRequest constant.ResultRequest
+	err := json.NewDecoder(r.Body).Decode(&resultRequest)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	//getByID interface ver parametre refactor taski
+	//Concurrency her get icin 3 defa dbyi bekliyoz
+	homeManager, err := helper.GetManagerByID(resultRequest.Home)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	awayManager, err := helper.GetManagerByID(resultRequest.Away)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	season, err := helper.GetSeasonByID(resultRequest.Season)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	//method yap refactor taski
+	homeScorers := &[]constant.Scorer{}
+	awayScorers := &[]constant.Scorer{}
+	for _, scorer := range resultRequest.Scorers {
+		if scorer.Manager == homeManager.ID.Hex() {
+			for _, player := range homeManager.Players {
+				if scorer.Player == player.ID.Hex() {
+					*homeScorers = append(*homeScorers, constant.Scorer{
+						Player: player,
+						Count:  scorer.Count,
+					})
+					break
+				}
+			}
+		} else {
+			for _, player := range awayManager.Players {
+				if scorer.Player == player.ID.Hex() {
+					*awayScorers = append(*awayScorers, constant.Scorer{
+						Player: player,
+						Count:  scorer.Count,
+					})
+					break
+				}
+			}
+		}
+	}
+
+	result := constant.Result{
+		Season:      resultRequest.Season,
+		Home:        resultRequest.Home,
+		Away:        resultRequest.Away,
+		SeasonType:  season.Type,
+		SeasonTitle: season.Title,
+		HomeManager: homeManager.Name,
+		AwayManager: awayManager.Name,
+		Score:       resultRequest.Score,
+		HomeScorers: *homeScorers,
+		AwayScorers: *awayScorers,
+	}
+
+	insert, err := helper.CreateResult(result)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	result.ID = insert.InsertedID
+
+	homeManager.AddResult(result)
+	_, err = helper.UpdateManager(&homeManager)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	awayManager.AddResult(result)
+	_, err = helper.UpdateManager(&awayManager)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	season.AddResult(result)
+	_, err = helper.UpdateSeason(&season)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(result)
 }
 
 func main() {
@@ -271,6 +399,12 @@ func main() {
 
 	//redis endpoints
 	router.HandleFunc("/cleanRedis", cleanRedis).Methods("GET")
+
+	//season endpoints
+	router.HandleFunc("/createSeason", createSeason).Methods("POST", "OPTIONS")
+
+	//result endpoint
+	router.HandleFunc("/result", resultLogic).Methods("POST", "OPTIONS")
 
 	log.Fatal(http.ListenAndServe(":"+port, handlers.CORS(header, methods, origins)(router)))
 }

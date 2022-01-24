@@ -55,11 +55,45 @@ type Manager struct {
 	Results []Result           `bson:"results,omitempty"`
 }
 
+// guzel bir struct donmem lazim dusunnnn
 type Result struct {
-	ID    primitive.ObjectID `bson:"_id,omitempty"`
-	Home  string             `json:"home,omitempty" bson:"home,omitempty"`
-	Away  string             `json:"away,omitempty" bson:"away,omitempty"`
-	Score []int              `json:"score,omitempty" bson:"score,omitempty"`
+	ID          primitive.ObjectID `bson:"_id,omitempty"`
+	Season      string             `json:"season,omitempty" bson:"season,omitempty"`
+	Home        string             `json:"home,omitempty" bson:"home,omitempty"`
+	Away        string             `json:"away,omitempty" bson:"away,omitempty"`
+	SeasonType  string             `json:"seasonType,omitempty" bson:"seasonType,omitempty"`
+	SeasonTitle string             `json:"seasonTitle,omitempty" bson:"seasonTitle,omitempty"`
+	HomeManager string             `json:"homeManager,omitempty" bson:"homeManager,omitempty"`
+	AwayManager string             `json:"awayManager,omitempty" bson:"awayManager,omitempty"`
+	Score       []int              `json:"score,omitempty" bson:"score,omitempty"`
+	HomeScorers []Scorer           `json:"homescorers,omitempty" bson:"homescorers,omitempty"`
+	AwayScorers []Scorer           `json:"awayscorers,omitempty" bson:"awayscorers,omitempty"`
+}
+
+type ResultRequest struct {
+	Season  string          `json:"season,omitempty"`
+	Home    string          `json:"home,omitempty"`
+	Away    string          `json:"away,omitempty"`
+	Score   []int           `json:"score,omitempty"`
+	Scorers []ScorerRequest `json:"scorer,omitempty"`
+}
+
+type Season struct {
+	ID      primitive.ObjectID `bson:"_id,omitempty"`
+	Type    string             `json:"type,omitempty" bson:"type,omitempty"`
+	Title   string             `json:"title,omitempty" bson:"title,omitempty"`
+	Results []Result           `bson:"results,omitempty"`
+}
+
+type Scorer struct {
+	Player Player `json:"player,omitempty"`
+	Count  int    `json:"count,omitempty"`
+}
+
+type ScorerRequest struct {
+	Player  string `json:"player,omitempty"`
+	Manager string `json:"manager,omitempty"`
+	Count   int    `json:"count,omitempty"`
 }
 
 type PlayerTransfer struct {
@@ -67,15 +101,22 @@ type PlayerTransfer struct {
 	Player  string `json:"player,omitempty"`
 }
 
+type Insert struct {
+	InsertedID primitive.ObjectID
+}
+
 //I have used below constants just to hold required database config's.
 const (
 	DB                = "futManagerDB"
 	PLAYERS           = "fut22Collection"
 	MANAGERS          = "fut22Managers"
+	SEASONS           = "fut22Seasons"
+	RESULTS           = "fut22Results"
 	TOPPLAYERS        = "topPlayers"
 	RANDOMPLAYERLIMIT = 68
 )
 
+//manager-logic
 func (m *Manager) playerExist(playerID primitive.ObjectID) (bool, int) {
 	found := false
 	foundIndex := 0
@@ -88,7 +129,6 @@ func (m *Manager) playerExist(playerID primitive.ObjectID) (bool, int) {
 	}
 	return found, foundIndex
 }
-
 func (m *Manager) AddPlayer(p Player) {
 	found, _ := m.playerExist(p.ID)
 	if !found {
@@ -100,4 +140,13 @@ func (m *Manager) DeletePlayer(playerID primitive.ObjectID) {
 	if found {
 		m.Players = append(m.Players[:index], m.Players[index+1:]...)
 	}
+}
+
+func (m *Manager) AddResult(r Result) {
+	m.Results = append(m.Results, r)
+}
+
+//season-logic
+func (s *Season) AddResult(r Result) {
+	s.Results = append(s.Results, r)
 }
