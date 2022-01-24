@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"manager-sensin/constant"
 	"manager-sensin/request"
+	"manager-sensin/structs"
 	"net/url"
 	"os"
 	"sync"
@@ -85,7 +86,7 @@ func GetRedisPool() *redis.Pool {
 		},
 	}
 }
-func SetRedisData(pool *redis.Pool, key string, players []constant.Player, duration time.Duration) error {
+func SetRedisData(pool *redis.Pool, key string, players []structs.Player, duration time.Duration) error {
 	conn := pool.Get()
 	defer conn.Close()
 
@@ -108,7 +109,7 @@ func SetRedisData(pool *redis.Pool, key string, players []constant.Player, durat
 
 	return nil
 }
-func GetRedisData(pool *redis.Pool, key string, players *[]constant.Player) error {
+func GetRedisData(pool *redis.Pool, key string, players *[]structs.Player) error {
 	conn := pool.Get()
 	defer conn.Close()
 
@@ -167,8 +168,8 @@ func GetSingleResultByID(id primitive.ObjectID, collectionName string) (*mongo.S
 }
 
 // player-start
-func GetPlayerByID(id string) (constant.Player, error) {
-	player := constant.Player{}
+func GetPlayerByID(id string) (structs.Player, error) {
+	player := structs.Player{}
 
 	playerID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -186,8 +187,8 @@ func GetPlayerByID(id string) (constant.Player, error) {
 
 	return player, nil
 }
-func SearchPlayerByFilter(filter bson.D) ([]constant.Player, error) {
-	var players []constant.Player
+func SearchPlayerByFilter(filter bson.D) ([]structs.Player, error) {
+	var players []structs.Player
 	client, err := GetMongoClient()
 	if err != nil {
 		return players, err
@@ -301,8 +302,8 @@ func CreateCollection(db *mongo.Database, collectionName string) error {
 }
 
 //crud opt for manager
-func CreateManager(manager constant.Manager) (constant.Insert, error) {
-	insert := constant.Insert{}
+func CreateManager(manager structs.Manager) (structs.Insert, error) {
+	insert := structs.Insert{}
 	client, err := GetMongoClient()
 	if err != nil {
 		return insert, err
@@ -336,8 +337,8 @@ func CreateManager(manager constant.Manager) (constant.Insert, error) {
 
 	return insert, nil
 }
-func GetManagerByID(id string) (constant.Manager, error) {
-	manager := constant.Manager{}
+func GetManagerByID(id string) (structs.Manager, error) {
+	manager := structs.Manager{}
 
 	managerID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -355,7 +356,7 @@ func GetManagerByID(id string) (constant.Manager, error) {
 
 	return manager, nil
 }
-func UpdateManager(man *constant.Manager) (*mongo.UpdateResult, error) {
+func UpdateManager(man *structs.Manager) (*mongo.UpdateResult, error) {
 	result := &mongo.UpdateResult{}
 	client, err := GetMongoClient()
 	if err != nil {
@@ -373,8 +374,8 @@ func UpdateManager(man *constant.Manager) (*mongo.UpdateResult, error) {
 //manager-end
 
 //crud opt for season
-func CreateSeason(season constant.Season) (constant.Insert, error) {
-	insert := constant.Insert{}
+func CreateSeason(season structs.Season) (structs.Insert, error) {
+	insert := structs.Insert{}
 	client, err := GetMongoClient()
 	if err != nil {
 		return insert, err
@@ -407,8 +408,8 @@ func CreateSeason(season constant.Season) (constant.Insert, error) {
 
 	return insert, nil
 }
-func GetSeasonByID(id string) (constant.Season, error) {
-	season := constant.Season{}
+func GetSeasonByID(id string) (structs.Season, error) {
+	season := structs.Season{}
 
 	seasonID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -426,7 +427,7 @@ func GetSeasonByID(id string) (constant.Season, error) {
 
 	return season, nil
 }
-func UpdateSeason(season *constant.Season) (*mongo.UpdateResult, error) {
+func UpdateSeason(season *structs.Season) (*mongo.UpdateResult, error) {
 	result := &mongo.UpdateResult{}
 	client, err := GetMongoClient()
 	if err != nil {
@@ -444,8 +445,8 @@ func UpdateSeason(season *constant.Season) (*mongo.UpdateResult, error) {
 //season-end
 
 //result-locig-start
-func CreateResult(result constant.Result) (constant.Insert, error) {
-	insert := constant.Insert{}
+func CreateResult(result structs.Result) (structs.Insert, error) {
+	insert := structs.Insert{}
 	client, err := GetMongoClient()
 	if err != nil {
 		return insert, err

@@ -1,6 +1,8 @@
 package request
 
-import "manager-sensin/constant"
+import (
+	"manager-sensin/structs"
+)
 
 type ResultRequest struct {
 	Season  string          `json:"season,omitempty"`
@@ -30,6 +32,6 @@ type Filter struct {
 }
 
 type Response struct {
-	Count   int               `json:"count,omitempty"`
-	Players []constant.Player `json:"players,omitempty"`
+	Count   int              `json:"count,omitempty"`
+	Players []structs.Player `json:"players,omitempty"`
 }

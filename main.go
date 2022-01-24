@@ -7,6 +7,7 @@ import (
 	"manager-sensin/constant"
 	"manager-sensin/helper"
 	"manager-sensin/request"
+	"manager-sensin/structs"
 	"math/rand"
 	"net/http"
 	"time"
@@ -18,7 +19,7 @@ import (
 
 // player-start
 func home(w http.ResponseWriter, r *http.Request) {
-	var players []constant.Player
+	var players []structs.Player
 	pool := helper.GetRedisPool()
 
 	exists, err := helper.CheckRedisData(pool, constant.TOPPLAYERS)
@@ -81,8 +82,8 @@ func searchPlayer(w http.ResponseWriter, r *http.Request) {
 }
 func randomPlayer(w http.ResponseWriter, r *http.Request) {
 	var f request.Filter
-	var players []constant.Player
-	var player constant.Player
+	var players []structs.Player
+	var player structs.Player
 
 	err := json.NewDecoder(r.Body).Decode(&f)
 	if err != nil {
@@ -135,14 +136,14 @@ func randomPlayer(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(request.Response{
 		Count:   len(players),
-		Players: []constant.Player{player},
+		Players: []structs.Player{player},
 	})
 }
 
 // player-end
 // manager-start
 func createManager(w http.ResponseWriter, r *http.Request) {
-	var t constant.Manager
+	var t structs.Manager
 	err := json.NewDecoder(r.Body).Decode(&t)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -248,7 +249,7 @@ func cleanRedis(w http.ResponseWriter, r *http.Request) {
 
 // season-start-en
 func createSeason(w http.ResponseWriter, r *http.Request) {
-	var s constant.Season
+	var s structs.Season
 	err := json.NewDecoder(r.Body).Decode(&s)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -302,13 +303,13 @@ func resultLogic(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//method yap refactor taski
-	homeScorers := &[]constant.Scorer{}
-	awayScorers := &[]constant.Scorer{}
+	homeScorers := &[]structs.Scorer{}
+	awayScorers := &[]structs.Scorer{}
 	for _, scorer := range resultRequest.Scorers {
 		if scorer.Manager == homeManager.ID.Hex() {
 			for _, player := range homeManager.Players {
 				if scorer.Player == player.ID.Hex() {
-					*homeScorers = append(*homeScorers, constant.Scorer{
+					*homeScorers = append(*homeScorers, structs.Scorer{
 						Player: player,
 						Count:  scorer.Count,
 					})
@@ -318,7 +319,7 @@ func resultLogic(w http.ResponseWriter, r *http.Request) {
 		} else {
 			for _, player := range awayManager.Players {
 				if scorer.Player == player.ID.Hex() {
-					*awayScorers = append(*awayScorers, constant.Scorer{
+					*awayScorers = append(*awayScorers, structs.Scorer{
 						Player: player,
 						Count:  scorer.Count,
 					})
@@ -328,7 +329,7 @@ func resultLogic(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	result := constant.Result{
+	result := structs.Result{
 		Season:      resultRequest.Season,
 		Home:        resultRequest.Home,
 		Away:        resultRequest.Away,
