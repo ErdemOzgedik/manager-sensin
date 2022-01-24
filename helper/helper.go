@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"manager-sensin/constant"
+	"manager-sensin/request"
 	"net/url"
 	"os"
 	"sync"
@@ -129,7 +130,7 @@ func CheckRedisData(pool *redis.Pool, key string) (bool, error) {
 
 	return ok, err
 }
-func GenerateRedisKey(filter *constant.Filter) string {
+func GenerateRedisKey(filter *request.Filter) string {
 	return fmt.Sprintf("%s-%s-%s-%s-%s-%v-%v-%v", filter.Name,
 		filter.Club, filter.Nationality, filter.League,
 		filter.Position, filter.Age, filter.Overall, filter.Potential)
@@ -203,7 +204,7 @@ func SearchPlayerByFilter(filter bson.D) ([]constant.Player, error) {
 
 	return players, err
 }
-func AddFilterViaFields(f *constant.Filter) bson.D {
+func AddFilterViaFields(f *request.Filter) bson.D {
 	filter := bson.D{}
 
 	if len(f.Age) == 2 {

@@ -31,22 +31,6 @@ type Player struct {
 	Foot         string             `bson:"preferred_foot,omitempty"`
 }
 
-type Filter struct {
-	Name        string `json:"name,omitempty"`
-	Club        string `json:"club,omitempty"`
-	League      string `json:"league,omitempty"`
-	Nationality string `json:"nationality,omitempty"`
-	Age         []int  `json:"age,omitempty"`
-	Overall     []int  `json:"overall,omitempty"`
-	Potential   []int  `json:"potential,omitempty"`
-	Position    string `json:"position,omitempty"`
-}
-
-type Response struct {
-	Count   int      `json:"count,omitempty"`
-	Players []Player `json:"players,omitempty"`
-}
-
 type Manager struct {
 	ID      primitive.ObjectID `bson:"_id,omitempty"`
 	Name    string             `json:"name,omitempty" bson:"name,omitempty"`
@@ -70,14 +54,6 @@ type Result struct {
 	AwayScorers []Scorer           `json:"awayscorers,omitempty" bson:"awayscorers,omitempty"`
 }
 
-type ResultRequest struct {
-	Season  string          `json:"season,omitempty"`
-	Home    string          `json:"home,omitempty"`
-	Away    string          `json:"away,omitempty"`
-	Score   []int           `json:"score,omitempty"`
-	Scorers []ScorerRequest `json:"scorer,omitempty"`
-}
-
 type Season struct {
 	ID      primitive.ObjectID `bson:"_id,omitempty"`
 	Type    string             `json:"type,omitempty" bson:"type,omitempty"`
@@ -90,22 +66,10 @@ type Scorer struct {
 	Count  int    `json:"count,omitempty"`
 }
 
-type ScorerRequest struct {
-	Player  string `json:"player,omitempty"`
-	Manager string `json:"manager,omitempty"`
-	Count   int    `json:"count,omitempty"`
-}
-
-type PlayerTransfer struct {
-	Manager string `json:"manager,omitempty"`
-	Player  string `json:"player,omitempty"`
-}
-
 type Insert struct {
 	InsertedID primitive.ObjectID
 }
 
-//I have used below constants just to hold required database config's.
 const (
 	DB                = "futManagerDB"
 	PLAYERS           = "fut22Collection"

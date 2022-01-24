@@ -6,6 +6,7 @@ import (
 	"log"
 	"manager-sensin/constant"
 	"manager-sensin/helper"
+	"manager-sensin/request"
 	"math/rand"
 	"net/http"
 	"time"
@@ -33,7 +34,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		filter := helper.AddFilterViaFields(&constant.Filter{
+		filter := helper.AddFilterViaFields(&request.Filter{
 			Overall: []int{87, 99},
 		})
 		players, err = helper.SearchPlayerByFilter(filter)
@@ -50,13 +51,13 @@ func home(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(constant.Response{
+	json.NewEncoder(w).Encode(request.Response{
 		Count:   len(players),
 		Players: players,
 	})
 }
 func searchPlayer(w http.ResponseWriter, r *http.Request) {
-	var f constant.Filter
+	var f request.Filter
 
 	err := json.NewDecoder(r.Body).Decode(&f)
 	if err != nil {
@@ -73,13 +74,13 @@ func searchPlayer(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(constant.Response{
+	json.NewEncoder(w).Encode(request.Response{
 		Count:   len(players),
 		Players: players,
 	})
 }
 func randomPlayer(w http.ResponseWriter, r *http.Request) {
-	var f constant.Filter
+	var f request.Filter
 	var players []constant.Player
 	var player constant.Player
 
@@ -132,7 +133,7 @@ func randomPlayer(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(constant.Response{
+	json.NewEncoder(w).Encode(request.Response{
 		Count:   len(players),
 		Players: []constant.Player{player},
 	})
@@ -165,7 +166,7 @@ func createManager(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(manager)
 }
 func addPlayer(w http.ResponseWriter, r *http.Request) {
-	var pt constant.PlayerTransfer
+	var pt request.PlayerTransfer
 
 	err := json.NewDecoder(r.Body).Decode(&pt)
 	if err != nil {
@@ -199,7 +200,7 @@ func addPlayer(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(manager)
 }
 func deletePlayer(w http.ResponseWriter, r *http.Request) {
-	var pt constant.PlayerTransfer
+	var pt request.PlayerTransfer
 
 	err := json.NewDecoder(r.Body).Decode(&pt)
 	if err != nil {
@@ -273,7 +274,7 @@ func createSeason(w http.ResponseWriter, r *http.Request) {
 
 // result-start-en
 func resultLogic(w http.ResponseWriter, r *http.Request) {
-	var resultRequest constant.ResultRequest
+	var resultRequest request.ResultRequest
 	err := json.NewDecoder(r.Body).Decode(&resultRequest)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
