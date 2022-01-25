@@ -6,18 +6,19 @@ import (
 	"log"
 	"manager-sensin/constant"
 	"manager-sensin/helper"
+	"manager-sensin/request"
+	"manager-sensin/structs"
 	"math/rand"
 	"net/http"
 	"time"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // player-start
 func home(w http.ResponseWriter, r *http.Request) {
-	var players []constant.Player
+	var players []structs.Player
 	pool := helper.GetRedisPool()
 
 	exists, err := helper.CheckRedisData(pool, constant.TOPPLAYERS)
@@ -33,7 +34,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		filter := helper.AddFilterViaFields(&constant.Filter{
+		filter := helper.AddFilterViaFields(&request.Filter{
 			Overall: []int{87, 99},
 		})
 		players, err = helper.SearchPlayerByFilter(filter)
@@ -50,13 +51,13 @@ func home(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(constant.Response{
+	json.NewEncoder(w).Encode(request.Response{
 		Count:   len(players),
 		Players: players,
 	})
 }
 func searchPlayer(w http.ResponseWriter, r *http.Request) {
-	var f constant.Filter
+	var f request.Filter
 
 	err := json.NewDecoder(r.Body).Decode(&f)
 	if err != nil {
@@ -73,15 +74,15 @@ func searchPlayer(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(constant.Response{
+	json.NewEncoder(w).Encode(request.Response{
 		Count:   len(players),
 		Players: players,
 	})
 }
 func randomPlayer(w http.ResponseWriter, r *http.Request) {
-	var f constant.Filter
-	var players []constant.Player
-	var player constant.Player
+	var f request.Filter
+	var players []structs.Player
+	var player structs.Player
 
 	err := json.NewDecoder(r.Body).Decode(&f)
 	if err != nil {
@@ -132,23 +133,23 @@ func randomPlayer(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(constant.Response{
+	json.NewEncoder(w).Encode(request.Response{
 		Count:   len(players),
-		Players: []constant.Player{player},
+		Players: []structs.Player{player},
 	})
 }
 
 // player-end
 // manager-start
 func createManager(w http.ResponseWriter, r *http.Request) {
-	var t constant.Manager
-	err := json.NewDecoder(r.Body).Decode(&t)
+	var m structs.Manager
+	err := json.NewDecoder(r.Body).Decode(&m)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	insert, err := helper.CreateManager(t)
+	insert, err := helper.CreateManager(m)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -164,28 +165,43 @@ func createManager(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(manager)
 }
-func addPlayer(w http.ResponseWriter, r *http.Request) {
-	var pt constant.PlayerTransfer
-
-	err := json.NewDecoder(r.Body).Decode(&pt)
+func getManagers(w http.ResponseWriter, r *http.Request) {
+	managers, err := helper.GetManagers()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	manager, err := helper.GetManagerByID(pt.Manager)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(managers)
+}
+func managePlayers(w http.ResponseWriter, r *http.Request) {
+	var mp request.ManagePlayer
+
+	err := json.NewDecoder(r.Body).Decode(&mp)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	player, err := helper.GetPlayerByID(pt.Player)
+	manager, err := helper.GetManagerByID(mp.Manager)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	manager.AddPlayer(player)
+	player, err := helper.GetPlayerByID(mp.Player)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if mp.Type == 0 {
+		manager.DeletePlayer(player)
+	} else {
+		manager.AddPlayer(player)
+	}
 
 	updateResult, err := helper.UpdateManager(&manager)
 	if err != nil {
@@ -198,28 +214,27 @@ func addPlayer(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(manager)
 }
-func deletePlayer(w http.ResponseWriter, r *http.Request) {
-	var pt constant.PlayerTransfer
+func managePoints(w http.ResponseWriter, r *http.Request) {
+	var mp request.ManagePoint
 
-	err := json.NewDecoder(r.Body).Decode(&pt)
+	err := json.NewDecoder(r.Body).Decode(&mp)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	playerID, err := primitive.ObjectIDFromHex(pt.Player)
+	manager, err := helper.GetManagerByID(mp.Manager)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	manager, err := helper.GetManagerByID(pt.Manager)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	if mp.Type == 0 && manager.Points < mp.Point {
+		http.Error(w, "Check your balance to precess", http.StatusBadRequest)
 		return
 	}
 
-	manager.DeletePlayer(playerID)
+	manager.ManagePoint(mp.Point, mp.Type)
 
 	updateResult, err := helper.UpdateManager(&manager)
 	if err != nil {
@@ -247,7 +262,7 @@ func cleanRedis(w http.ResponseWriter, r *http.Request) {
 
 // season-start-en
 func createSeason(w http.ResponseWriter, r *http.Request) {
-	var s constant.Season
+	var s structs.Season
 	err := json.NewDecoder(r.Body).Decode(&s)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -273,7 +288,7 @@ func createSeason(w http.ResponseWriter, r *http.Request) {
 
 // result-start-en
 func resultLogic(w http.ResponseWriter, r *http.Request) {
-	var resultRequest constant.ResultRequest
+	var resultRequest request.ResultRequest
 	err := json.NewDecoder(r.Body).Decode(&resultRequest)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -301,13 +316,13 @@ func resultLogic(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//method yap refactor taski
-	homeScorers := &[]constant.Scorer{}
-	awayScorers := &[]constant.Scorer{}
+	homeScorers := &[]structs.Scorer{}
+	awayScorers := &[]structs.Scorer{}
 	for _, scorer := range resultRequest.Scorers {
 		if scorer.Manager == homeManager.ID.Hex() {
 			for _, player := range homeManager.Players {
 				if scorer.Player == player.ID.Hex() {
-					*homeScorers = append(*homeScorers, constant.Scorer{
+					*homeScorers = append(*homeScorers, structs.Scorer{
 						Player: player,
 						Count:  scorer.Count,
 					})
@@ -317,7 +332,7 @@ func resultLogic(w http.ResponseWriter, r *http.Request) {
 		} else {
 			for _, player := range awayManager.Players {
 				if scorer.Player == player.ID.Hex() {
-					*awayScorers = append(*awayScorers, constant.Scorer{
+					*awayScorers = append(*awayScorers, structs.Scorer{
 						Player: player,
 						Count:  scorer.Count,
 					})
@@ -327,7 +342,7 @@ func resultLogic(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	result := constant.Result{
+	result := structs.Result{
 		Season:      resultRequest.Season,
 		Home:        resultRequest.Home,
 		Away:        resultRequest.Away,
@@ -388,20 +403,21 @@ func main() {
 	methods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS"})
 	origins := handlers.AllowedOrigins([]string{"*"})
 
-	router.HandleFunc("/", home)
-	router.HandleFunc("/search", searchPlayer).Methods("POST", "OPTIONS")
-	router.HandleFunc("/random", randomPlayer).Methods("POST", "OPTIONS")
+	router.HandleFunc("/player", home)
+	router.HandleFunc("/player/search", searchPlayer).Methods("POST", "OPTIONS")
+	router.HandleFunc("/player/random", randomPlayer).Methods("POST", "OPTIONS")
 
 	//manager endpoints
-	router.HandleFunc("/createManager", createManager).Methods("POST", "OPTIONS")
-	router.HandleFunc("/addPlayer", addPlayer).Methods("POST", "OPTIONS")
-	router.HandleFunc("/deletePlayer", deletePlayer).Methods("POST", "OPTIONS")
+	router.HandleFunc("/manager", createManager).Methods("POST", "OPTIONS")
+	router.HandleFunc("/manager", getManagers).Methods("GET", "OPTIONS")
+	router.HandleFunc("/manager/player", managePlayers).Methods("POST", "OPTIONS")
+	router.HandleFunc("/manager/point", managePoints).Methods("POST", "OPTIONS")
 
 	//redis endpoints
 	router.HandleFunc("/cleanRedis", cleanRedis).Methods("GET")
 
 	//season endpoints
-	router.HandleFunc("/createSeason", createSeason).Methods("POST", "OPTIONS")
+	router.HandleFunc("/season", createSeason).Methods("POST", "OPTIONS")
 
 	//result endpoint
 	router.HandleFunc("/result", resultLogic).Methods("POST", "OPTIONS")

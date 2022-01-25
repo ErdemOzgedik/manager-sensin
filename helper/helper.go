@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"manager-sensin/constant"
+	"manager-sensin/request"
+	"manager-sensin/structs"
 	"net/url"
 	"os"
 	"sync"
@@ -84,7 +86,7 @@ func GetRedisPool() *redis.Pool {
 		},
 	}
 }
-func SetRedisData(pool *redis.Pool, key string, players []constant.Player, duration time.Duration) error {
+func SetRedisData(pool *redis.Pool, key string, players []structs.Player, duration time.Duration) error {
 	conn := pool.Get()
 	defer conn.Close()
 
@@ -107,7 +109,7 @@ func SetRedisData(pool *redis.Pool, key string, players []constant.Player, durat
 
 	return nil
 }
-func GetRedisData(pool *redis.Pool, key string, players *[]constant.Player) error {
+func GetRedisData(pool *redis.Pool, key string, players *[]structs.Player) error {
 	conn := pool.Get()
 	defer conn.Close()
 
@@ -129,7 +131,7 @@ func CheckRedisData(pool *redis.Pool, key string) (bool, error) {
 
 	return ok, err
 }
-func GenerateRedisKey(filter *constant.Filter) string {
+func GenerateRedisKey(filter *request.Filter) string {
 	return fmt.Sprintf("%s-%s-%s-%s-%s-%v-%v-%v", filter.Name,
 		filter.Club, filter.Nationality, filter.League,
 		filter.Position, filter.Age, filter.Overall, filter.Potential)
@@ -166,8 +168,8 @@ func GetSingleResultByID(id primitive.ObjectID, collectionName string) (*mongo.S
 }
 
 // player-start
-func GetPlayerByID(id string) (constant.Player, error) {
-	player := constant.Player{}
+func GetPlayerByID(id string) (structs.Player, error) {
+	player := structs.Player{}
 
 	playerID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -185,8 +187,8 @@ func GetPlayerByID(id string) (constant.Player, error) {
 
 	return player, nil
 }
-func SearchPlayerByFilter(filter bson.D) ([]constant.Player, error) {
-	var players []constant.Player
+func SearchPlayerByFilter(filter bson.D) ([]structs.Player, error) {
+	var players []structs.Player
 	client, err := GetMongoClient()
 	if err != nil {
 		return players, err
@@ -203,7 +205,7 @@ func SearchPlayerByFilter(filter bson.D) ([]constant.Player, error) {
 
 	return players, err
 }
-func AddFilterViaFields(f *constant.Filter) bson.D {
+func AddFilterViaFields(f *request.Filter) bson.D {
 	filter := bson.D{}
 
 	if len(f.Age) == 2 {
@@ -300,8 +302,8 @@ func CreateCollection(db *mongo.Database, collectionName string) error {
 }
 
 //crud opt for manager
-func CreateManager(manager constant.Manager) (constant.Insert, error) {
-	insert := constant.Insert{}
+func CreateManager(manager structs.Manager) (structs.Insert, error) {
+	insert := structs.Insert{}
 	client, err := GetMongoClient()
 	if err != nil {
 		return insert, err
@@ -315,6 +317,8 @@ func CreateManager(manager constant.Manager) (constant.Insert, error) {
 
 	doc, err := db.Collection(constant.MANAGERS).InsertOne(context.TODO(), bson.D{
 		{Key: "name", Value: manager.Name},
+		{Key: "userID", Value: manager.UserID},
+		{Key: "email", Value: manager.Email},
 		{Key: "players", Value: bson.A{}},
 		{Key: "points", Value: 0},
 		{Key: "results", Value: bson.A{}},
@@ -335,8 +339,25 @@ func CreateManager(manager constant.Manager) (constant.Insert, error) {
 
 	return insert, nil
 }
-func GetManagerByID(id string) (constant.Manager, error) {
-	manager := constant.Manager{}
+func GetManagers() ([]structs.Manager, error) {
+	var managers []structs.Manager
+	client, err := GetMongoClient()
+	if err != nil {
+		return managers, err
+	}
+
+	cursor, err := client.Database(constant.DB).Collection(constant.MANAGERS).Find(context.TODO(), bson.M{}, nil)
+	if err != nil {
+		return managers, err
+	}
+	if err = cursor.All(context.TODO(), &managers); err != nil {
+		return managers, err
+	}
+
+	return managers, err
+}
+func GetManagerByID(id string) (structs.Manager, error) {
+	manager := structs.Manager{}
 
 	managerID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -354,7 +375,7 @@ func GetManagerByID(id string) (constant.Manager, error) {
 
 	return manager, nil
 }
-func UpdateManager(man *constant.Manager) (*mongo.UpdateResult, error) {
+func UpdateManager(man *structs.Manager) (*mongo.UpdateResult, error) {
 	result := &mongo.UpdateResult{}
 	client, err := GetMongoClient()
 	if err != nil {
@@ -372,8 +393,8 @@ func UpdateManager(man *constant.Manager) (*mongo.UpdateResult, error) {
 //manager-end
 
 //crud opt for season
-func CreateSeason(season constant.Season) (constant.Insert, error) {
-	insert := constant.Insert{}
+func CreateSeason(season structs.Season) (structs.Insert, error) {
+	insert := structs.Insert{}
 	client, err := GetMongoClient()
 	if err != nil {
 		return insert, err
@@ -406,8 +427,8 @@ func CreateSeason(season constant.Season) (constant.Insert, error) {
 
 	return insert, nil
 }
-func GetSeasonByID(id string) (constant.Season, error) {
-	season := constant.Season{}
+func GetSeasonByID(id string) (structs.Season, error) {
+	season := structs.Season{}
 
 	seasonID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -425,7 +446,7 @@ func GetSeasonByID(id string) (constant.Season, error) {
 
 	return season, nil
 }
-func UpdateSeason(season *constant.Season) (*mongo.UpdateResult, error) {
+func UpdateSeason(season *structs.Season) (*mongo.UpdateResult, error) {
 	result := &mongo.UpdateResult{}
 	client, err := GetMongoClient()
 	if err != nil {
@@ -443,8 +464,8 @@ func UpdateSeason(season *constant.Season) (*mongo.UpdateResult, error) {
 //season-end
 
 //result-locig-start
-func CreateResult(result constant.Result) (constant.Insert, error) {
-	insert := constant.Insert{}
+func CreateResult(result structs.Result) (structs.Insert, error) {
+	insert := structs.Insert{}
 	client, err := GetMongoClient()
 	if err != nil {
 		return insert, err
