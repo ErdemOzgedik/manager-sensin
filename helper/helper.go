@@ -317,6 +317,8 @@ func CreateManager(manager structs.Manager) (structs.Insert, error) {
 
 	doc, err := db.Collection(constant.MANAGERS).InsertOne(context.TODO(), bson.D{
 		{Key: "name", Value: manager.Name},
+		{Key: "userID", Value: manager.UserID},
+		{Key: "email", Value: manager.Email},
 		{Key: "players", Value: bson.A{}},
 		{Key: "points", Value: 0},
 		{Key: "results", Value: bson.A{}},
@@ -336,6 +338,23 @@ func CreateManager(manager structs.Manager) (structs.Insert, error) {
 	}
 
 	return insert, nil
+}
+func GetManagers() ([]structs.Manager, error) {
+	var managers []structs.Manager
+	client, err := GetMongoClient()
+	if err != nil {
+		return managers, err
+	}
+
+	cursor, err := client.Database(constant.DB).Collection(constant.MANAGERS).Find(context.TODO(), bson.M{}, nil)
+	if err != nil {
+		return managers, err
+	}
+	if err = cursor.All(context.TODO(), &managers); err != nil {
+		return managers, err
+	}
+
+	return managers, err
 }
 func GetManagerByID(id string) (structs.Manager, error) {
 	manager := structs.Manager{}

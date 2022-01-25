@@ -32,6 +32,8 @@ type Player struct {
 type Manager struct {
 	ID      primitive.ObjectID `bson:"_id,omitempty"`
 	Name    string             `json:"name,omitempty" bson:"name,omitempty"`
+	Email   string             `json:"email,omitempty" bson:"email,omitempty"`
+	UserID  string             `json:"userID,omitempty" bson:"userID,omitempty"`
 	Points  int                `bson:"points,omitempty"`
 	Players []Player           `bson:"players,omitempty"`
 	Results []Result           `bson:"results,omitempty"`
@@ -86,10 +88,18 @@ func (m *Manager) AddPlayer(p Player) {
 		m.Players = append(m.Players, p)
 	}
 }
-func (m *Manager) DeletePlayer(playerID primitive.ObjectID) {
-	found, index := m.playerExist(playerID)
+func (m *Manager) DeletePlayer(p Player) {
+	found, index := m.playerExist(p.ID)
 	if found {
 		m.Players = append(m.Players[:index], m.Players[index+1:]...)
+	}
+}
+
+func (m *Manager) ManagePoint(point, pointType int) {
+	if pointType == 0 {
+		m.Points -= point
+	} else {
+		m.Points += point
 	}
 }
 

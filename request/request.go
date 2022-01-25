@@ -16,9 +16,15 @@ type ScorerRequest struct {
 	Manager string `json:"manager,omitempty"`
 	Count   int    `json:"count,omitempty"`
 }
-type PlayerTransfer struct {
+type ManagePlayer struct {
 	Manager string `json:"manager,omitempty"`
 	Player  string `json:"player,omitempty"`
+	Type    int    `json:"type,omitempty"`
+}
+type ManagePoint struct {
+	Manager string `json:"manager,omitempty"`
+	Point   int    `json:"point,omitempty"`
+	Type    int    `json:"type,omitempty"`
 }
 type Filter struct {
 	Name        string `json:"name,omitempty"`
