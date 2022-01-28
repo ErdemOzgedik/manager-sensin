@@ -49,3 +49,8 @@ type Response struct {
 	Count   int              `json:"count,omitempty"`
 	Players []structs.Player `json:"players,omitempty"`
 }
+type ErrorResponse struct {
+	Code    int    `json:"code,omitempty"`
+	Message string `json:"message,omitempty"`
+	Error   string `json:"error,omitempty"`
+}

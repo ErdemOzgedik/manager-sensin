@@ -24,14 +24,14 @@ func home(w http.ResponseWriter, r *http.Request) {
 
 	exists, err := helper.CheckRedisData(pool, constant.TOPPLAYERS)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.CHECKREDISERROR)
 		return
 	}
 
 	if exists {
 		err := helper.GetRedisData(pool, constant.TOPPLAYERS, &players)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			helper.ReturnError(w, http.StatusInternalServerError, err, constant.GETREDISERROR)
 			return
 		}
 	} else {
@@ -40,18 +40,16 @@ func home(w http.ResponseWriter, r *http.Request) {
 		})
 		players, err = helper.SearchPlayerByFilter(filter, constant.OVERALLOPTION, 0)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			helper.ReturnError(w, http.StatusInternalServerError, err, constant.SEARCHPLAYERERROR)
 			return
 		}
 		err = helper.SetRedisData(pool, constant.TOPPLAYERS, players, 0)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			helper.ReturnError(w, http.StatusInternalServerError, err, constant.SETREDISERROR)
 			return
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(request.Response{
 		Count:   len(players),
 		Players: players,
@@ -63,7 +61,7 @@ func searchPlayer(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&f)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.DECODEERROR)
 		return
 	}
 
@@ -75,12 +73,10 @@ func searchPlayer(w http.ResponseWriter, r *http.Request) {
 
 	players, err := helper.SearchPlayerByFilter(filter, constant.OVERALLOPTION, int64(limit))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.SEARCHPLAYERERROR)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(request.Response{
 		Count:   len(players),
 		Players: players,
@@ -94,7 +90,7 @@ func randomPlayer(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&f)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.DECODEERROR)
 		return
 	}
 
@@ -106,21 +102,21 @@ func randomPlayer(w http.ResponseWriter, r *http.Request) {
 	pool := helper.GetRedisPool()
 	exists, err := helper.CheckRedisData(pool, key)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.CHECKREDISERROR)
 		return
 	}
 
 	if exists {
 		err = helper.GetRedisData(pool, key, &players)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			helper.ReturnError(w, http.StatusInternalServerError, err, constant.GETREDISERROR)
 			return
 		}
 	} else {
 		filter := helper.AddFilterViaFields(&f)
 		players, err = helper.SearchPlayerByFilter(filter, constant.OVERALLOPTION, int64(limit))
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			helper.ReturnError(w, http.StatusInternalServerError, err, constant.SEARCHPLAYERERROR)
 			return
 		}
 	}
@@ -131,12 +127,10 @@ func randomPlayer(w http.ResponseWriter, r *http.Request) {
 
 	err = helper.SetRedisData(pool, key, players, 45*time.Minute)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.SETREDISERROR)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(request.Response{
 		Count:   len(players),
 		Players: []structs.Player{player},
@@ -149,35 +143,32 @@ func createManager(w http.ResponseWriter, r *http.Request) {
 	var m structs.Manager
 	err := json.NewDecoder(r.Body).Decode(&m)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.DECODEERROR)
 		return
 	}
 
 	insert, err := helper.CreateManager(m)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, "Create manager error")
 		return
 	}
 
 	manager, err := helper.GetManagerByID(insert.InsertedID.Hex())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.GETMANAGERERROR)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(manager)
 }
 func getManagers(w http.ResponseWriter, r *http.Request) {
 	managers, err := helper.GetManagers()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.GETMANAGERERROR)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(managers)
 }
 func managePlayers(w http.ResponseWriter, r *http.Request) {
@@ -185,19 +176,19 @@ func managePlayers(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&mp)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.DECODEERROR)
 		return
 	}
 
 	manager, err := helper.GetManagerByID(mp.Manager)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.GETMANAGERERROR)
 		return
 	}
 
 	player, err := helper.GetPlayerByID(mp.Player)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.GETPLAYERERROR)
 		return
 	}
 
@@ -209,13 +200,11 @@ func managePlayers(w http.ResponseWriter, r *http.Request) {
 
 	updateResult, err := helper.UpdateManager(&manager)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.UPDATEERROR)
 		return
 	}
 	fmt.Println("Updated Count", updateResult.ModifiedCount)
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(manager)
 }
 func managePoints(w http.ResponseWriter, r *http.Request) {
@@ -223,18 +212,18 @@ func managePoints(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&mp)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.DECODEERROR)
 		return
 	}
 
 	manager, err := helper.GetManagerByID(mp.Manager)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.GETMANAGERERROR)
 		return
 	}
 
 	if mp.Type == 0 && manager.Points < mp.Point {
-		http.Error(w, "Check your balance to precess", http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusBadRequest, fmt.Errorf("check your balance to precess"), "Balance error")
 		return
 	}
 
@@ -242,13 +231,11 @@ func managePoints(w http.ResponseWriter, r *http.Request) {
 
 	updateResult, err := helper.UpdateManager(&manager)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.UPDATEERROR)
 		return
 	}
 	fmt.Println("Updated Count", updateResult.ModifiedCount)
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(manager)
 }
 
@@ -257,10 +244,9 @@ func managePoints(w http.ResponseWriter, r *http.Request) {
 func cleanRedis(w http.ResponseWriter, r *http.Request) {
 	err := helper.DeteleRedisKeys()
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusNotFound)
+		helper.ReturnError(w, http.StatusInternalServerError, err, "Delete redis error")
 		return
 	}
-	w.Header().Set("Content-Type", "application/json")
 	http.Error(w, "Redis data removed!!!", http.StatusOK)
 }
 
@@ -269,23 +255,22 @@ func createSeason(w http.ResponseWriter, r *http.Request) {
 	var s structs.Season
 	err := json.NewDecoder(r.Body).Decode(&s)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.DECODEERROR)
 		return
 	}
 
 	insert, err := helper.CreateSeason(s)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, "Create season error")
 		return
 	}
 
 	season, err := helper.GetSeasonByID(insert.InsertedID.Hex())
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.GETSEASONERROR)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(season)
 }
@@ -295,7 +280,7 @@ func resultLogic(w http.ResponseWriter, r *http.Request) {
 	var resultRequest request.ResultRequest
 	err := json.NewDecoder(r.Body).Decode(&resultRequest)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.DECODEERROR)
 		return
 	}
 
@@ -303,19 +288,19 @@ func resultLogic(w http.ResponseWriter, r *http.Request) {
 	//Concurrency her get icin 3 defa dbyi bekliyoz
 	homeManager, err := helper.GetManagerByID(resultRequest.Home)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.GETMANAGERERROR)
 		return
 	}
 
 	awayManager, err := helper.GetManagerByID(resultRequest.Away)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.GETMANAGERERROR)
 		return
 	}
 
 	season, err := helper.GetSeasonByID(resultRequest.Season)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.GETSEASONERROR)
 		return
 	}
 
@@ -361,7 +346,7 @@ func resultLogic(w http.ResponseWriter, r *http.Request) {
 
 	insert, err := helper.CreateResult(result)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, "Season create error")
 		return
 	}
 	result.ID = insert.InsertedID
@@ -369,26 +354,24 @@ func resultLogic(w http.ResponseWriter, r *http.Request) {
 	homeManager.AddResult(result)
 	_, err = helper.UpdateManager(&homeManager)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.UPDATEERROR)
 		return
 	}
 
 	awayManager.AddResult(result)
 	_, err = helper.UpdateManager(&awayManager)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.UPDATEERROR)
 		return
 	}
 
 	season.AddResult(result)
 	_, err = helper.UpdateSeason(&season)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.UPDATEERROR)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(result)
 }
 
@@ -397,19 +380,19 @@ func packOpener(w http.ResponseWriter, r *http.Request) {
 	var pack request.Pack
 	err := json.NewDecoder(r.Body).Decode(&pack)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.DECODEERROR)
 		return
 	}
 
 	packPrice := constant.PACK_PRICES[pack.Type]
 	manager, err := helper.GetManagerByID(pack.Manager)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.GETMANAGERERROR)
 		return
 	}
 
 	if manager.Points < packPrice {
-		http.Error(w, "Check manager point to process this action", http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusBadRequest, fmt.Errorf("check manager point to process this action"), "Balance error")
 		return
 	} else {
 		manager.ManagePoint(packPrice, 0)
@@ -418,7 +401,7 @@ func packOpener(w http.ResponseWriter, r *http.Request) {
 	filter, limit := helper.AddFilterViaType(pack.Type)
 	players, err := helper.SearchPlayerByFilter(filter, bson.D{}, int64(limit))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.SEARCHPLAYERERROR)
 		return
 	}
 
@@ -430,14 +413,10 @@ func packOpener(w http.ResponseWriter, r *http.Request) {
 
 	updateResult, err := helper.UpdateManager(&manager)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.UPDATEERROR)
 		return
 	}
-
 	fmt.Println("Manager players updated:", updateResult.ModifiedCount)
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(request.PackResponse{
 		Player:  player,
 		Point:   manager.Points,
@@ -456,6 +435,7 @@ func main() {
 	}
 
 	router := mux.NewRouter().StrictSlash(true)
+	router.Use(commonMiddleware)
 	header := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"})
 	methods := handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS"})
 	origins := handlers.AllowedOrigins([]string{"*"})
@@ -483,4 +463,11 @@ func main() {
 	router.HandleFunc("/pack", packOpener).Methods("POST", "OPTIONS")
 
 	log.Fatal(http.ListenAndServe(":"+port, handlers.CORS(header, methods, origins)(router)))
+}
+
+func commonMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		next.ServeHTTP(w, r)
+	})
 }

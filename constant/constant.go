@@ -14,6 +14,19 @@ const (
 	RANDOMPLAYERLIMIT = 68
 )
 
+// error messages
+const (
+	CHECKREDISERROR   = "Check redis error"
+	GETREDISERROR     = "Get redis error"
+	SETREDISERROR     = "Set redis error"
+	SEARCHPLAYERERROR = "Search player error"
+	DECODEERROR       = "Decode error"
+	GETMANAGERERROR   = "Get manager error"
+	GETPLAYERERROR    = "Get player error"
+	GETSEASONERROR    = "Get season error"
+	UPDATEERROR       = "Update error"
+)
+
 var OVERALLOPTION = bson.D{{Key: "overall", Value: -1}}
 
 const (
