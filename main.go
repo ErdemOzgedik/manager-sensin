@@ -114,10 +114,7 @@ func randomPlayer(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	rand.Seed(time.Now().UnixNano())
-	min := 0
-	max := len(players)
-	random := rand.Intn(max-min) + min
+	random := helper.GetRandom(0, len(players))
 	player = players[random]
 	players = append(players[:random], players[random+1:]...)
 
@@ -415,9 +412,7 @@ func packOpener(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rand.Seed(time.Now().UnixNano())
-	min := 0
-	max := len(players)
-	random := rand.Intn(max-min) + min
+	random := helper.GetRandom(0, len(players))
 	player := players[random]
 
 	manager.AddPlayer(player)

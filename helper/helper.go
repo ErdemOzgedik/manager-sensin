@@ -276,8 +276,7 @@ func AddFilterViaType(packType int) (bson.D, int) {
 	minOverall := 60
 	maxOverall := 64
 
-	rand.Seed(time.Now().UnixNano())
-	randomIndex := (rand.Intn(10) + 1) * 10
+	randomIndex := GetRandom(1, 11) * 10
 
 	if constant.SILVER == packType {
 		minOverall = 65
@@ -317,6 +316,11 @@ func GetEnv(key string) (string, error) {
 	}
 	return val, nil
 }
+func GetRandom(min, max int) int {
+	rand.Seed(time.Now().UnixNano())
+	return rand.Intn(max-min) + min
+}
+
 func CreateCollection(db *mongo.Database, collectionName string) error {
 	collNames, err := db.ListCollectionNames(context.TODO(), bson.D{})
 	if err != nil {
