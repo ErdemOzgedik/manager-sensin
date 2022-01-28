@@ -14,6 +14,7 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 // player-start
@@ -37,7 +38,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 		filter := helper.AddFilterViaFields(&request.Filter{
 			Overall: []int{87, 99},
 		})
-		players, err = helper.SearchPlayerByFilter(filter)
+		players, err = helper.SearchPlayerByFilter(filter, constant.OVERALLOPTIONS, 0)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -66,7 +67,7 @@ func searchPlayer(w http.ResponseWriter, r *http.Request) {
 	}
 	filter := helper.AddFilterViaFields(&f)
 
-	players, err := helper.SearchPlayerByFilter(filter)
+	players, err := helper.SearchPlayerByFilter(filter, constant.OVERALLOPTIONS, 0)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -106,28 +107,20 @@ func randomPlayer(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		filter := helper.AddFilterViaFields(&f)
-		players, err = helper.SearchPlayerByFilter(filter)
+		players, err = helper.SearchPlayerByFilter(filter, constant.OVERALLOPTIONS, 0)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 	}
 
-	if len(players) > constant.RANDOMPLAYERLIMIT {
-		rand.Seed(time.Now().UnixNano())
-		min := 0
-		max := len(players)
-		random := rand.Intn(max-min) + min
-		player = players[random]
-		players = append(players[:random], players[random+1:]...)
+	random := helper.GetRandom(0, len(players))
+	player = players[random]
+	players = append(players[:random], players[random+1:]...)
 
-		err = helper.SetRedisData(pool, key, players, 45*time.Minute)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-	} else {
-		http.Error(w, "Change filter to use random api", http.StatusBadRequest)
+	err = helper.SetRedisData(pool, key, players, 45*time.Minute)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -286,7 +279,7 @@ func createSeason(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(season)
 }
 
-// result-start-en
+// result-start-end
 func resultLogic(w http.ResponseWriter, r *http.Request) {
 	var resultRequest request.ResultRequest
 	err := json.NewDecoder(r.Body).Decode(&resultRequest)
@@ -388,6 +381,59 @@ func resultLogic(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(result)
 }
 
+// pack-start-end
+func packOpener(w http.ResponseWriter, r *http.Request) {
+	var pack request.Pack
+	err := json.NewDecoder(r.Body).Decode(&pack)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	packPrice := constant.PACK_PRICES[pack.Type]
+	manager, err := helper.GetManagerByID(pack.Manager)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if manager.Points < packPrice {
+		http.Error(w, "Check manager point to process this action", http.StatusBadRequest)
+		return
+	} else {
+		manager.ManagePoint(packPrice, 0)
+	}
+
+	filter, limit := helper.AddFilterViaType(pack.Type)
+	players, err := helper.SearchPlayerByFilter(filter, bson.D{}, int64(limit))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	rand.Seed(time.Now().UnixNano())
+	random := helper.GetRandom(0, len(players))
+	player := players[random]
+
+	manager.AddPlayer(player)
+
+	updateResult, err := helper.UpdateManager(&manager)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	fmt.Println("Manager players updated:", updateResult.ModifiedCount)
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(request.PackResponse{
+		Player:  player,
+		Point:   manager.Points,
+		Message: fmt.Sprintf("%d Oyuncu arasindan %d. gelen oyuncu %s", len(players), random, player.Name),
+	})
+}
+
 func main() {
 	var port string
 	var err error
@@ -421,6 +467,9 @@ func main() {
 
 	//result endpoint
 	router.HandleFunc("/result", resultLogic).Methods("POST", "OPTIONS")
+
+	//pack endpoins
+	router.HandleFunc("/pack", packOpener).Methods("POST", "OPTIONS")
 
 	log.Fatal(http.ListenAndServe(":"+port, handlers.CORS(header, methods, origins)(router)))
 }
