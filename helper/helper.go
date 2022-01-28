@@ -8,6 +8,7 @@ import (
 	"manager-sensin/request"
 	"manager-sensin/structs"
 	"math/rand"
+	"net/http"
 	"net/url"
 	"os"
 	"sync"
@@ -319,6 +320,14 @@ func GetEnv(key string) (string, error) {
 func GetRandom(min, max int) int {
 	rand.Seed(time.Now().UnixNano())
 	return rand.Intn(max-min) + min
+}
+func ReturnError(w http.ResponseWriter, code int, err error, message string) {
+	w.WriteHeader(code)
+	json.NewEncoder(w).Encode(request.ErrorResponse{
+		Code:    code,
+		Message: message,
+		Error:   err.Error(),
+	})
 }
 
 func CreateCollection(db *mongo.Database, collectionName string) error {
