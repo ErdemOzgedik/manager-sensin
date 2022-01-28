@@ -273,8 +273,8 @@ func AddFilterViaFields(f *request.Filter) bson.D {
 }
 func AddFilterViaType(packType int) (bson.D, int) {
 	filter := bson.D{}
-	minOverall := 65
-	maxOverall := 69
+	minOverall := 60
+	maxOverall := 64
 
 	rand.Seed(time.Now().UnixNano())
 	randomIndex := (rand.Intn(10) + 1) * 10
