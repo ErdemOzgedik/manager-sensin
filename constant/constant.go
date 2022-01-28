@@ -9,10 +9,12 @@ const (
 	SEASONS           = "fut22Seasons"
 	RESULTS           = "fut22Results"
 	TOPPLAYERS        = "topPlayers"
+	ALLPLAYERS        = "-----[]-[]-[]"
+	ALLPLAYERLIMIT    = 3000
 	RANDOMPLAYERLIMIT = 68
 )
 
-var OVERALLOPTIONS = bson.D{{Key: "overall", Value: -1}}
+var OVERALLOPTION = bson.D{{Key: "overall", Value: -1}}
 
 const (
 	SILVER int = iota

@@ -38,7 +38,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 		filter := helper.AddFilterViaFields(&request.Filter{
 			Overall: []int{87, 99},
 		})
-		players, err = helper.SearchPlayerByFilter(filter, constant.OVERALLOPTIONS, 0)
+		players, err = helper.SearchPlayerByFilter(filter, constant.OVERALLOPTION, 0)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
@@ -59,15 +59,21 @@ func home(w http.ResponseWriter, r *http.Request) {
 }
 func searchPlayer(w http.ResponseWriter, r *http.Request) {
 	var f request.Filter
+	limit := 0
 
 	err := json.NewDecoder(r.Body).Decode(&f)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	if helper.GenerateRedisKey(&f) == constant.ALLPLAYERS {
+		limit = constant.ALLPLAYERLIMIT
+	}
+
 	filter := helper.AddFilterViaFields(&f)
 
-	players, err := helper.SearchPlayerByFilter(filter, constant.OVERALLOPTIONS, 0)
+	players, err := helper.SearchPlayerByFilter(filter, constant.OVERALLOPTION, int64(limit))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -84,6 +90,7 @@ func randomPlayer(w http.ResponseWriter, r *http.Request) {
 	var f request.Filter
 	var players []structs.Player
 	var player structs.Player
+	limit := 0
 
 	err := json.NewDecoder(r.Body).Decode(&f)
 	if err != nil {
@@ -92,6 +99,10 @@ func randomPlayer(w http.ResponseWriter, r *http.Request) {
 	}
 
 	key := helper.GenerateRedisKey(&f)
+	if key == constant.ALLPLAYERS {
+		limit = constant.ALLPLAYERLIMIT
+	}
+
 	pool := helper.GetRedisPool()
 	exists, err := helper.CheckRedisData(pool, key)
 	if err != nil {
@@ -107,7 +118,7 @@ func randomPlayer(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		filter := helper.AddFilterViaFields(&f)
-		players, err = helper.SearchPlayerByFilter(filter, constant.OVERALLOPTIONS, 0)
+		players, err = helper.SearchPlayerByFilter(filter, constant.OVERALLOPTION, int64(limit))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
