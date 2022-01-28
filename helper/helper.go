@@ -7,6 +7,7 @@ import (
 	"manager-sensin/constant"
 	"manager-sensin/request"
 	"manager-sensin/structs"
+	"math/rand"
 	"net/url"
 	"os"
 	"sync"
@@ -187,7 +188,7 @@ func GetPlayerByID(id string) (structs.Player, error) {
 
 	return player, nil
 }
-func SearchPlayerByFilter(filter bson.D) ([]structs.Player, error) {
+func SearchPlayerByFilter(filter, filterOptions bson.D, limit int64) ([]structs.Player, error) {
 	var players []structs.Player
 	client, err := GetMongoClient()
 	if err != nil {
@@ -195,7 +196,7 @@ func SearchPlayerByFilter(filter bson.D) ([]structs.Player, error) {
 	}
 
 	cursor, err := client.Database(constant.DB).Collection(constant.PLAYERS).Find(context.TODO(), filter,
-		options.Find().SetSort(bson.D{{Key: "overall", Value: -1}}))
+		options.Find().SetSort(filterOptions).SetLimit(limit))
 	if err != nil {
 		return players, err
 	}
@@ -269,6 +270,42 @@ func AddFilterViaFields(f *request.Filter) bson.D {
 	}
 
 	return filter
+}
+func AddFilterViaType(packType int) (bson.D, int) {
+	filter := bson.D{}
+	minOverall := 65
+	maxOverall := 69
+
+	rand.Seed(time.Now().UnixNano())
+	randomIndex := (rand.Intn(10) + 1) * 10
+
+	if constant.SILVER == packType {
+		minOverall = 65
+		maxOverall = 69
+	} else if constant.PREMIUMSILVER == packType {
+		minOverall = 70
+		maxOverall = 74
+	} else if constant.GOLD == packType {
+		minOverall = 75
+		maxOverall = 79
+	} else if constant.PREMIUMGOLD == packType {
+		minOverall = 77
+		maxOverall = 83
+	} else if constant.ULTIMATEGOLD == packType {
+		minOverall = 81
+		maxOverall = 87
+	} else if constant.PRIMEGOLD == packType {
+		minOverall = 84
+		maxOverall = 99
+	}
+
+	filter = append(filter, bson.E{Key: "overall", Value: bson.D{
+		{Key: "$gte", Value: minOverall},
+		{Key: "$lte", Value: maxOverall},
+	}},
+	)
+
+	return filter, randomIndex
 }
 
 // player-end

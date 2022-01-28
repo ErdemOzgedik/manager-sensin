@@ -36,7 +36,15 @@ type Filter struct {
 	Potential   []int  `json:"potential,omitempty"`
 	Position    string `json:"position,omitempty"`
 }
-
+type Pack struct {
+	Type    int    `json:"type,omitempty"`
+	Manager string `json:"manager,omitempty"`
+}
+type PackResponse struct {
+	Point   int            `json:"point,omitempty"`
+	Player  structs.Player `json:"player,omitempty"`
+	Message string         `json:"message,omitempty"`
+}
 type Response struct {
 	Count   int              `json:"count,omitempty"`
 	Players []structs.Player `json:"players,omitempty"`
