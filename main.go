@@ -275,7 +275,7 @@ func createSeason(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(season)
 }
 func getStanding(w http.ResponseWriter, r *http.Request) {
-	var sr request.StandingRequest
+	var sr request.StatisticRequest
 	err := json.NewDecoder(r.Body).Decode(&sr)
 	if err != nil {
 		helper.ReturnError(w, http.StatusInternalServerError, err, constant.DECODEERROR)
@@ -291,7 +291,7 @@ func getStanding(w http.ResponseWriter, r *http.Request) {
 	standing := helper.GetStanding(season.Results)
 	stats := helper.GetStats(season.Results)
 
-	json.NewEncoder(w).Encode(request.StandingResponse{
+	json.NewEncoder(w).Encode(request.StatisticResponse{
 		Standing: standing,
 		Stats:    stats,
 	})
@@ -478,7 +478,7 @@ func main() {
 
 	//season endpoint
 	router.HandleFunc("/season", createSeason).Methods("POST", "OPTIONS")
-	router.HandleFunc("/standing", getStanding).Methods("POST", "OPTIONS")
+	router.HandleFunc("/statistics", getStanding).Methods("POST", "OPTIONS")
 
 	//result endpoint
 	router.HandleFunc("/result", resultLogic).Methods("POST", "OPTIONS")

@@ -16,10 +16,10 @@ type ScorerRequest struct {
 	Manager string `json:"manager,omitempty"`
 	Count   int    `json:"count,omitempty"`
 }
-type StandingRequest struct {
+type StatisticRequest struct {
 	Season string `json:"season,omitempty"`
 }
-type StandingResponse struct {
+type StatisticResponse struct {
 	Standing []structs.Standing `json:"standing,omitempty"`
 	Stats    []structs.Stats    `json:"stats,omitempty"`
 }
