@@ -250,7 +250,7 @@ func cleanRedis(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Redis data removed!!!", http.StatusOK)
 }
 
-// season-start-en
+// season-start
 func createSeason(w http.ResponseWriter, r *http.Request) {
 	var s structs.Season
 	err := json.NewDecoder(r.Body).Decode(&s)
@@ -274,7 +274,30 @@ func createSeason(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(season)
 }
+func getStanding(w http.ResponseWriter, r *http.Request) {
+	var sr request.StandingRequest
+	err := json.NewDecoder(r.Body).Decode(&sr)
+	if err != nil {
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.DECODEERROR)
+		return
+	}
 
+	season, err := helper.GetSeasonByID(sr.Season)
+	if err != nil {
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.GETSEASONERROR)
+		return
+	}
+
+	standing := helper.GetStanding(season.Results)
+	stats := helper.GetStats(season.Results)
+
+	json.NewEncoder(w).Encode(request.StandingResponse{
+		Standing: standing,
+		Stats:    stats,
+	})
+}
+
+// season-end
 // result-start-end
 func resultLogic(w http.ResponseWriter, r *http.Request) {
 	var resultRequest request.ResultRequest
@@ -453,13 +476,14 @@ func main() {
 	//redis endpoints
 	router.HandleFunc("/cleanRedis", cleanRedis).Methods("GET")
 
-	//season endpoints
+	//season endpoint
 	router.HandleFunc("/season", createSeason).Methods("POST", "OPTIONS")
+	router.HandleFunc("/standing", getStanding).Methods("POST", "OPTIONS")
 
 	//result endpoint
 	router.HandleFunc("/result", resultLogic).Methods("POST", "OPTIONS")
 
-	//pack endpoins
+	//pack endpoint
 	router.HandleFunc("/pack", packOpener).Methods("POST", "OPTIONS")
 
 	log.Fatal(http.ListenAndServe(":"+port, handlers.CORS(header, methods, origins)(router)))
