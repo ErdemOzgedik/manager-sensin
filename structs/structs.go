@@ -69,6 +69,24 @@ type Insert struct {
 	InsertedID primitive.ObjectID
 }
 
+type Standing struct {
+	Manager string   `json:"manager,omitempty"`
+	Points  int      `json:"points,omitempty"`
+	Played  int      `json:"played,omitempty"`
+	Won     int      `json:"won,omitempty"`
+	Draw    int      `json:"draw,omitempty"`
+	Lost    int      `json:"lost,omitempty"`
+	GF      int      `json:"gf,omitempty"`
+	GA      int      `json:"ga,omitempty"`
+	GD      int      `json:"gd,omitempty"`
+	Form    []string `json:"form,omitempty"`
+}
+type Stats struct {
+	Manager string `json:"manager,omitempty"`
+	Player  string `json:"player,omitempty"`
+	Count   int    `json:"count,omitempty"`
+}
+
 //manager-logic
 func (m *Manager) playerExist(playerID primitive.ObjectID) (bool, int) {
 	found := false
@@ -110,4 +128,16 @@ func (m *Manager) AddResult(r Result) {
 //season-logic
 func (s *Season) AddResult(r Result) {
 	s.Results = append(s.Results, r)
+}
+func (s *Standing) Set(standing Standing) {
+	s.Manager = standing.Manager
+	s.Points += standing.Points
+	s.Played += standing.Played
+	s.Won += standing.Won
+	s.Draw += standing.Draw
+	s.Lost += standing.Lost
+	s.GF += standing.GF
+	s.GA += standing.GA
+	s.GD += standing.GD
+	s.Form = append(s.Form, standing.Form...)
 }

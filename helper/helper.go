@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sort"
 	"sync"
 	"time"
 
@@ -321,6 +322,7 @@ func GetRandom(min, max int) int {
 	rand.Seed(time.Now().UnixNano())
 	return rand.Intn(max-min) + min
 }
+
 func ReturnError(w http.ResponseWriter, code int, err error, message string) {
 	w.WriteHeader(code)
 	json.NewEncoder(w).Encode(request.ErrorResponse{
@@ -509,6 +511,205 @@ func UpdateSeason(season *structs.Season) (*mongo.UpdateResult, error) {
 	}
 
 	return result, nil
+}
+func GetStanding(results []structs.Result) []structs.Standing {
+	standingMap := make(map[string]*structs.Standing)
+	for _, result := range results {
+		if result.Score[0] > result.Score[1] {
+			_, found := standingMap[result.HomeManager]
+			if found {
+				standingMap[result.HomeManager].Set(structs.Standing{
+					Manager: result.HomeManager,
+					Points:  3,
+					Played:  1,
+					Won:     1,
+					GF:      result.Score[0],
+					GA:      result.Score[1],
+					GD:      result.Score[0] - result.Score[1],
+					Form:    []string{"W"},
+				})
+			} else {
+				standingMap[result.HomeManager] = &structs.Standing{
+					Manager: result.HomeManager,
+					Points:  3,
+					Played:  1,
+					Won:     1,
+					GF:      result.Score[0],
+					GA:      result.Score[1],
+					GD:      result.Score[0] - result.Score[1],
+					Form:    []string{"W"},
+				}
+			}
+			_, foundAway := standingMap[result.AwayManager]
+			if foundAway {
+				standingMap[result.AwayManager].Set(structs.Standing{
+					Manager: result.AwayManager,
+					Played:  1,
+					Lost:    1,
+					GA:      result.Score[0],
+					GF:      result.Score[1],
+					GD:      result.Score[1] - result.Score[0],
+					Form:    []string{"L"},
+				})
+			} else {
+				standingMap[result.AwayManager] = &structs.Standing{
+					Manager: result.AwayManager,
+					Played:  1,
+					Lost:    1,
+					GA:      result.Score[0],
+					GF:      result.Score[1],
+					GD:      result.Score[1] - result.Score[0],
+					Form:    []string{"L"},
+				}
+			}
+		} else if result.Score[1] > result.Score[0] {
+			_, found := standingMap[result.HomeManager]
+			if found {
+				standingMap[result.HomeManager].Set(structs.Standing{
+					Manager: result.HomeManager,
+					Played:  1,
+					Lost:    1,
+					GF:      result.Score[0],
+					GA:      result.Score[1],
+					GD:      result.Score[0] - result.Score[1],
+					Form:    []string{"L"},
+				})
+			} else {
+				standingMap[result.HomeManager] = &structs.Standing{
+					Manager: result.HomeManager,
+					Played:  1,
+					Lost:    1,
+					GF:      result.Score[0],
+					GA:      result.Score[1],
+					GD:      result.Score[0] - result.Score[1],
+					Form:    []string{"L"},
+				}
+			}
+			_, foundAway := standingMap[result.AwayManager]
+			if foundAway {
+				standingMap[result.AwayManager].Set(structs.Standing{
+					Manager: result.AwayManager,
+					Played:  1,
+					Points:  3,
+					Won:     1,
+					GA:      result.Score[0],
+					GF:      result.Score[1],
+					GD:      result.Score[1] - result.Score[0],
+					Form:    []string{"W"},
+				})
+			} else {
+				standingMap[result.AwayManager] = &structs.Standing{
+					Manager: result.AwayManager,
+					Played:  1,
+					Points:  3,
+					Won:     1,
+					GA:      result.Score[0],
+					GF:      result.Score[1],
+					GD:      result.Score[1] - result.Score[0],
+					Form:    []string{"W"},
+				}
+			}
+		} else {
+			_, found := standingMap[result.HomeManager]
+			if found {
+				standingMap[result.HomeManager].Set(structs.Standing{
+					Manager: result.HomeManager,
+					Played:  1,
+					Draw:    1,
+					Points:  1,
+					GF:      result.Score[0],
+					GA:      result.Score[1],
+					GD:      result.Score[0] - result.Score[1],
+					Form:    []string{"D"},
+				})
+			} else {
+				standingMap[result.HomeManager] = &structs.Standing{
+					Manager: result.HomeManager,
+					Played:  1,
+					Points:  1,
+					Draw:    1,
+					GF:      result.Score[0],
+					GA:      result.Score[1],
+					GD:      result.Score[0] - result.Score[1],
+					Form:    []string{"D"},
+				}
+			}
+			_, foundAway := standingMap[result.AwayManager]
+			if foundAway {
+				standingMap[result.AwayManager].Set(structs.Standing{
+					Manager: result.AwayManager,
+					Played:  1,
+					Points:  1,
+					Draw:    1,
+					GA:      result.Score[0],
+					GF:      result.Score[1],
+					GD:      result.Score[1] - result.Score[0],
+					Form:    []string{"D"},
+				})
+			} else {
+				standingMap[result.AwayManager] = &structs.Standing{
+					Manager: result.AwayManager,
+					Played:  1,
+					Points:  1,
+					Draw:    1,
+					GA:      result.Score[0],
+					GF:      result.Score[1],
+					GD:      result.Score[1] - result.Score[0],
+					Form:    []string{"D"},
+				}
+			}
+		}
+	}
+	standing := []structs.Standing{}
+	for _, s := range standingMap {
+		standing = append(standing, *s)
+	}
+
+	sort.Slice(standing, func(i, j int) bool {
+		return standing[i].Points > standing[j].Points
+	})
+	return standing
+}
+func GetStats(results []structs.Result) []structs.Stats {
+	statsMap := make(map[string]*structs.Stats)
+	for _, result := range results {
+		for _, scorer := range result.HomeScorers {
+			_, found := statsMap[scorer.Player.Name]
+			if found {
+				statsMap[scorer.Player.Name].Count += scorer.Count
+			} else {
+				statsMap[scorer.Player.Name] = &structs.Stats{
+					Manager: result.HomeManager,
+					Player:  scorer.Player.Name,
+					Count:   scorer.Count,
+				}
+			}
+		}
+
+		for _, scorer := range result.AwayScorers {
+			_, found := statsMap[scorer.Player.Name]
+			if found {
+				statsMap[scorer.Player.Name].Count += scorer.Count
+			} else {
+				statsMap[scorer.Player.Name] = &structs.Stats{
+					Manager: result.AwayManager,
+					Player:  scorer.Player.Name,
+					Count:   scorer.Count,
+				}
+			}
+		}
+	}
+
+	stats := []structs.Stats{}
+	for _, s := range statsMap {
+		stats = append(stats, *s)
+	}
+
+	sort.Slice(stats, func(i, j int) bool {
+		return stats[i].Count > stats[j].Count
+	})
+
+	return stats
 }
 
 //season-end
