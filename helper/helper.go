@@ -479,6 +479,23 @@ func CreateSeason(season structs.Season) (structs.Insert, error) {
 
 	return insert, nil
 }
+func GetSeasons() ([]request.SeasonResponse, error) {
+	var seasons []request.SeasonResponse
+	client, err := GetMongoClient()
+	if err != nil {
+		return seasons, err
+	}
+
+	cursor, err := client.Database(constant.DB).Collection(constant.SEASONS).Find(context.TODO(), bson.M{}, nil)
+	if err != nil {
+		return seasons, err
+	}
+	if err = cursor.All(context.TODO(), &seasons); err != nil {
+		return seasons, err
+	}
+
+	return seasons, err
+}
 func GetSeasonByID(id string) (structs.Season, error) {
 	season := structs.Season{}
 

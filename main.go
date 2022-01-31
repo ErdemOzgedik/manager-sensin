@@ -296,6 +296,15 @@ func getStanding(w http.ResponseWriter, r *http.Request) {
 		Stats:    stats,
 	})
 }
+func getSeasons(w http.ResponseWriter, r *http.Request) {
+	seasons, err := helper.GetSeasons()
+	if err != nil {
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.GETSEASONERROR)
+		return
+	}
+
+	json.NewEncoder(w).Encode(seasons)
+}
 
 // season-end
 // result-start-end
@@ -468,8 +477,8 @@ func main() {
 	router.HandleFunc("/player/random", randomPlayer).Methods("POST", "OPTIONS")
 
 	//manager endpoints
-	router.HandleFunc("/manager", createManager).Methods("POST", "OPTIONS")
 	router.HandleFunc("/manager", getManagers).Methods("GET", "OPTIONS")
+	router.HandleFunc("/manager", createManager).Methods("POST", "OPTIONS")
 	router.HandleFunc("/manager/player", managePlayers).Methods("POST", "OPTIONS")
 	router.HandleFunc("/manager/point", managePoints).Methods("POST", "OPTIONS")
 
@@ -477,6 +486,7 @@ func main() {
 	router.HandleFunc("/cleanRedis", cleanRedis).Methods("GET")
 
 	//season endpoint
+	router.HandleFunc("/season", getSeasons).Methods("GET", "OPTIONS")
 	router.HandleFunc("/season", createSeason).Methods("POST", "OPTIONS")
 	router.HandleFunc("/statistics", getStanding).Methods("POST", "OPTIONS")
 

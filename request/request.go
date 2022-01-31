@@ -23,6 +23,11 @@ type StatisticResponse struct {
 	Standing []structs.Standing `json:"standing,omitempty"`
 	Stats    []structs.Stats    `json:"stats,omitempty"`
 }
+type SeasonResponse struct {
+	ID    string `json:"id,omitempty" bson:"_id,omitempty"`
+	Title string `json:"title,omitempty"`
+	Type  string `json:"type,omitempty"`
+}
 type ManagePlayer struct {
 	Manager string `json:"manager,omitempty"`
 	Player  string `json:"player,omitempty"`
