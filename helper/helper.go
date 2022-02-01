@@ -698,6 +698,7 @@ func GetStats(results []structs.Result) []structs.Stats {
 				statsMap[scorer.Player.Name] = &structs.Stats{
 					Manager: result.HomeManager,
 					Player:  scorer.Player.Name,
+					FaceUrl: scorer.Player.FaceUrl,
 					Count:   scorer.Count,
 				}
 			}
@@ -711,6 +712,7 @@ func GetStats(results []structs.Result) []structs.Stats {
 				statsMap[scorer.Player.Name] = &structs.Stats{
 					Manager: result.AwayManager,
 					Player:  scorer.Player.Name,
+					FaceUrl: scorer.Player.FaceUrl,
 					Count:   scorer.Count,
 				}
 			}

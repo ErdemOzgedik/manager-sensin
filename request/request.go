@@ -20,8 +20,8 @@ type StatisticRequest struct {
 	Season string `json:"season,omitempty"`
 }
 type StatisticResponse struct {
-	Standing []structs.Standing `json:"standing,omitempty"`
-	Stats    []structs.Stats    `json:"stats,omitempty"`
+	Standing []structs.Standing `json:"standing"`
+	Stats    []structs.Stats    `json:"stats"`
 }
 type SeasonResponse struct {
 	ID    string `json:"id,omitempty" bson:"_id,omitempty"`

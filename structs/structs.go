@@ -70,21 +70,22 @@ type Insert struct {
 }
 
 type Standing struct {
-	Manager string   `json:"manager,omitempty"`
-	Points  int      `json:"points,omitempty"`
-	Played  int      `json:"played,omitempty"`
-	Won     int      `json:"won,omitempty"`
-	Draw    int      `json:"draw,omitempty"`
-	Lost    int      `json:"lost,omitempty"`
-	GF      int      `json:"gf,omitempty"`
-	GA      int      `json:"ga,omitempty"`
-	GD      int      `json:"gd,omitempty"`
-	Form    []string `json:"form,omitempty"`
+	Manager string   `json:"manager"`
+	Points  int      `json:"points"`
+	Played  int      `json:"played"`
+	Won     int      `json:"won"`
+	Draw    int      `json:"draw"`
+	Lost    int      `json:"lost"`
+	GF      int      `json:"gf"`
+	GA      int      `json:"ga"`
+	GD      int      `json:"gd"`
+	Form    []string `json:"form"`
 }
 type Stats struct {
-	Manager string `json:"manager,omitempty"`
-	Player  string `json:"player,omitempty"`
-	Count   int    `json:"count,omitempty"`
+	Manager string `json:"manager"`
+	Player  string `json:"player"`
+	Count   int    `json:"count"`
+	FaceUrl string `json:"faceUrl"`
 }
 
 //manager-logic
