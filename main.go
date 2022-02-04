@@ -171,6 +171,16 @@ func getManagers(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(managers)
 }
+func getManager(w http.ResponseWriter, r *http.Request) {
+	managerID := mux.Vars(r)["id"]
+	manager, err := helper.GetManager(managerID)
+	if err != nil {
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.GETMANAGERERROR)
+		return
+	}
+
+	json.NewEncoder(w).Encode(manager)
+}
 func managePlayers(w http.ResponseWriter, r *http.Request) {
 	var mp request.ManagePlayer
 
@@ -479,6 +489,7 @@ func main() {
 	//manager endpoints
 	router.HandleFunc("/manager", getManagers).Methods("GET", "OPTIONS")
 	router.HandleFunc("/manager", createManager).Methods("POST", "OPTIONS")
+	router.HandleFunc("/manager/{id}", getManager).Methods("GET", "OPTIONS")
 	router.HandleFunc("/manager/player", managePlayers).Methods("POST", "OPTIONS")
 	router.HandleFunc("/manager/point", managePoints).Methods("POST", "OPTIONS")
 

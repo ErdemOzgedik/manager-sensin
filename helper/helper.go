@@ -169,6 +169,14 @@ func GetSingleResultByID(id primitive.ObjectID, collectionName string) (*mongo.S
 
 	return client.Database(constant.DB).Collection(collectionName).FindOne(context.TODO(), bson.M{"_id": id}), nil
 }
+func GetSingleResultByFirebaseID(id string, collectionName string) (*mongo.SingleResult, error) {
+	client, err := GetMongoClient()
+	if err != nil {
+		return nil, err
+	}
+
+	return client.Database(constant.DB).Collection(collectionName).FindOne(context.TODO(), bson.M{"userID": id}), nil
+}
 
 // player-start
 func GetPlayerByID(id string) (structs.Player, error) {
@@ -407,6 +415,21 @@ func GetManagers() ([]structs.Manager, error) {
 	}
 
 	return managers, err
+}
+func GetManager(id string) (structs.Manager, error) {
+	manager := structs.Manager{}
+
+	result, err := GetSingleResultByFirebaseID(id, constant.MANAGERS)
+	if err != nil {
+		return manager, err
+	}
+
+	err = result.Decode(&manager)
+	if err != nil {
+		return manager, err
+	}
+
+	return manager, nil
 }
 func GetManagerByID(id string) (structs.Manager, error) {
 	manager := structs.Manager{}
