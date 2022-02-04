@@ -278,7 +278,7 @@ func AddFilterViaType(packType int) (bson.D, int) {
 	minOverall := 60
 	maxOverall := 64
 
-	randomIndex := GetRandom(1, 11) * 10
+	randomIndex := GetRandom(1, 11) * 100
 
 	if constant.SILVER == packType {
 		minOverall = 65
