@@ -218,7 +218,7 @@ func SearchPlayerByFilter(filter, filterOptions bson.D, limit int64) ([]structs.
 	return players, err
 }
 func AddFilterViaFields(f *request.Filter) bson.D {
-	filter := bson.D{}
+	filter := bson.D{bson.E{Key: "hidden", Value: false}}
 
 	if len(f.Age) == 2 {
 		filter = append(filter, bson.E{Key: "age", Value: bson.D{
@@ -283,7 +283,7 @@ func AddFilterViaFields(f *request.Filter) bson.D {
 	return filter
 }
 func AddFilterViaType(packType int) (bson.D, int) {
-	filter := bson.D{}
+	filter := bson.D{bson.E{Key: "hidden", Value: false}}
 	minOverall := 60
 	maxOverall := 64
 
