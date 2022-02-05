@@ -46,3 +46,25 @@ var PACK_PRICES = map[int]int{
 	ULTIMATEGOLD:  10000,
 	PRIMEGOLD:     15000,
 }
+
+var WILL_ADD_FLAG = []string{
+	"Czech Republic Gambrinus Liga",
+	"Hungarian Nemzeti Bajnokság I",
+	"UAE Arabian Gulf League",
+	"Peruvian Primera División",
+	"Italian Serie B",
+	"Paraguayan Primera División",
+	"Ecuadorian Serie A",
+	"Liga de Fútbol Profesional Boliviano",
+	"Cypriot First Division",
+	"Croatian Prva HNL",
+	"Uruguayan Primera División",
+	"Chilian Campeonato Nacional",
+	"Ukrainian Premier League",
+	"Greek Super League",
+	"Colombian Liga Postobón",
+	"English National League",
+	"South African Premier Division",
+	"Finnish Veikkausliiga",
+	"Venezuelan Primera División",
+	"Russian Premier League"}

@@ -466,6 +466,37 @@ func packOpener(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// migration-start-end
+func addFlag() {
+	defer helper.TimeTrack(time.Now(), "migration")
+
+	players, err := helper.SearchPlayerByFilter(bson.D{}, bson.D{}, 0)
+	if err != nil {
+		fmt.Println("gelmedi")
+		return
+	}
+	channel := make(chan string)
+	for _, player := range players {
+		go func(p structs.Player) {
+			found, _ := helper.Found(constant.WILL_ADD_FLAG, p.League)
+			if found {
+				fmt.Println(p.Name, "-", p.Club, "-", p.League)
+				p.Hidden = true
+				_, err := helper.UpdatePlayer(&p)
+				if err != nil {
+					fmt.Println("update err")
+					return
+				}
+			}
+			channel <- fmt.Sprintf("%s-%s", p.Name, p.League)
+		}(player)
+	}
+
+	for i := 0; i < len(players); i++ {
+		fmt.Println(<-channel)
+	}
+}
+
 func main() {
 	var port string
 	var err error

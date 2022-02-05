@@ -27,6 +27,7 @@ type Player struct {
 	SM           int                `bson:"skill_moves,omitempty"`
 	WorkRate     string             `bson:"work_rate,omitempty"`
 	Foot         string             `bson:"preferred_foot,omitempty"`
+	Hidden       bool               `bson:"hidden,omitempty"`
 }
 
 type Manager struct {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"manager-sensin/constant"
 	"manager-sensin/request"
 	"manager-sensin/structs"
@@ -316,6 +317,20 @@ func AddFilterViaType(packType int) (bson.D, int) {
 
 	return filter, randomIndex
 }
+func UpdatePlayer(player *structs.Player) (*mongo.UpdateResult, error) {
+	result := &mongo.UpdateResult{}
+	client, err := GetMongoClient()
+	if err != nil {
+		return result, err
+	}
+
+	result, err = client.Database(constant.DB).Collection(constant.PLAYERS).ReplaceOne(context.TODO(), bson.M{"_id": player.ID}, player)
+	if err != nil {
+		return result, err
+	}
+
+	return result, nil
+}
 
 // player-end
 
@@ -330,7 +345,6 @@ func GetRandom(min, max int) int {
 	rand.Seed(time.Now().UnixNano())
 	return rand.Intn(max-min) + min
 }
-
 func ReturnError(w http.ResponseWriter, code int, err error, message string) {
 	w.WriteHeader(code)
 	json.NewEncoder(w).Encode(request.ErrorResponse{
@@ -338,6 +352,22 @@ func ReturnError(w http.ResponseWriter, code int, err error, message string) {
 		Message: message,
 		Error:   err.Error(),
 	})
+}
+func TimeTrack(start time.Time, name string) {
+	elapsed := time.Since(start)
+	log.Printf("%s took %s", name, elapsed)
+}
+func Found(leagues []string, leagueName string) (bool, int) {
+	found := false
+	foundIndex := 0
+	for i, league := range leagues {
+		if league == leagueName {
+			found = true
+			foundIndex = i
+			break
+		}
+	}
+	return found, foundIndex
 }
 
 func CreateCollection(db *mongo.Database, collectionName string) error {
