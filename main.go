@@ -466,8 +466,8 @@ func packOpener(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// migration-start-end
-func addFlag() {
+// migration-start
+func hideByLeague() {
 	defer helper.TimeTrack(time.Now(), "migration")
 
 	players, err := helper.SearchPlayerByFilter(bson.D{}, bson.D{}, 0)
@@ -478,7 +478,7 @@ func addFlag() {
 	channel := make(chan string)
 	for _, player := range players {
 		go func(p structs.Player) {
-			found, _ := helper.Found(constant.WILL_ADD_FLAG, p.League)
+			found, _ := helper.IsExistInSlice(constant.WILL_HIDE_VIA_LEAGUE, p.League)
 			if found {
 				fmt.Println(p.Name, "-", p.Club, "-", p.League)
 				p.Hidden = true
@@ -496,7 +496,36 @@ func addFlag() {
 		fmt.Println(<-channel)
 	}
 }
+func showByTeam() {
+	defer helper.TimeTrack(time.Now(), "migration")
 
+	players, err := helper.SearchPlayerByFilter(bson.D{bson.E{Key: "hidden", Value: true}}, bson.D{}, 0)
+	if err != nil {
+		fmt.Println("gelmedi")
+		return
+	}
+	channel := make(chan string)
+	for _, player := range players {
+		go func(p structs.Player) {
+			found, _ := helper.IsExistInSlice(constant.WILL_SHOW_VIA_TEAM, p.Club)
+			if found {
+				p.Hidden = false
+				_, err := helper.UpdatePlayer(&p)
+				if err != nil {
+					fmt.Println("update err")
+					return
+				}
+			}
+			channel <- fmt.Sprintf("%s-%s", p.Name, p.Club)
+		}(player)
+	}
+
+	for i := 0; i < len(players); i++ {
+		fmt.Println(<-channel)
+	}
+}
+
+// migration-end
 func main() {
 	var port string
 	var err error

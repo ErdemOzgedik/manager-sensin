@@ -218,7 +218,7 @@ func SearchPlayerByFilter(filter, filterOptions bson.D, limit int64) ([]structs.
 	return players, err
 }
 func AddFilterViaFields(f *request.Filter) bson.D {
-	filter := bson.D{}
+	filter := bson.D{bson.E{Key: "hidden", Value: false}}
 
 	if len(f.Age) == 2 {
 		filter = append(filter, bson.E{Key: "age", Value: bson.D{
@@ -283,7 +283,7 @@ func AddFilterViaFields(f *request.Filter) bson.D {
 	return filter
 }
 func AddFilterViaType(packType int) (bson.D, int) {
-	filter := bson.D{}
+	filter := bson.D{bson.E{Key: "hidden", Value: false}}
 	minOverall := 60
 	maxOverall := 64
 
@@ -357,11 +357,11 @@ func TimeTrack(start time.Time, name string) {
 	elapsed := time.Since(start)
 	log.Printf("%s took %s", name, elapsed)
 }
-func Found(leagues []string, leagueName string) (bool, int) {
+func IsExistInSlice(ts []string, t string) (bool, int) {
 	found := false
 	foundIndex := 0
-	for i, league := range leagues {
-		if league == leagueName {
+	for i, s := range ts {
+		if s == t {
 			found = true
 			foundIndex = i
 			break
