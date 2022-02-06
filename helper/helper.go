@@ -357,11 +357,11 @@ func TimeTrack(start time.Time, name string) {
 	elapsed := time.Since(start)
 	log.Printf("%s took %s", name, elapsed)
 }
-func Found(leagues []string, leagueName string) (bool, int) {
+func IsExistInSlice(ts []string, t string) (bool, int) {
 	found := false
 	foundIndex := 0
-	for i, league := range leagues {
-		if league == leagueName {
+	for i, s := range ts {
+		if s == t {
 			found = true
 			foundIndex = i
 			break

@@ -47,7 +47,7 @@ var PACK_PRICES = map[int]int{
 	PRIMEGOLD:     15000,
 }
 
-var WILL_ADD_FLAG = []string{
+var WILL_HIDE_VIA_LEAGUE = []string{
 	"Czech Republic Gambrinus Liga",
 	"Hungarian Nemzeti Bajnokság I",
 	"UAE Arabian Gulf League",
@@ -68,3 +68,15 @@ var WILL_ADD_FLAG = []string{
 	"Finnish Veikkausliiga",
 	"Venezuelan Primera División",
 	"Russian Premier League"}
+
+var WILL_SHOW_VIA_TEAM = []string{
+	"PFC CSKA Moscow",
+	"Dinamo Zagreb",
+	"Shakhtar Donetsk",
+	"Olympiacos CFP",
+	"Parma",
+	"Spartak Moskva",
+	"Dynamo Kyiv",
+	"SK Slavia Praha",
+	"FC Lokomotiv Moscow",
+	"Dinamo Zagreb"}
