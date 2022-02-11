@@ -172,11 +172,22 @@ func getManagers(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(managers)
 }
 func getManager(w http.ResponseWriter, r *http.Request) {
+	var err error
+	manager := structs.Manager{}
 	managerID := mux.Vars(r)["id"]
-	manager, err := helper.GetManager(managerID)
-	if err != nil {
-		helper.ReturnError(w, http.StatusInternalServerError, err, constant.GETMANAGERERROR)
-		return
+
+	if len(managerID) == 24 {
+		manager, err = helper.GetManagerByID(managerID)
+		if err != nil {
+			helper.ReturnError(w, http.StatusInternalServerError, err, constant.GETMANAGERERROR)
+			return
+		}
+	} else {
+		manager, err = helper.GetManager(managerID)
+		if err != nil {
+			helper.ReturnError(w, http.StatusInternalServerError, err, constant.GETMANAGERERROR)
+			return
+		}
 	}
 
 	json.NewEncoder(w).Encode(manager)
