@@ -55,10 +55,11 @@ type Result struct {
 }
 
 type Season struct {
-	ID      primitive.ObjectID `bson:"_id,omitempty"`
-	Type    string             `json:"type,omitempty" bson:"type,omitempty"`
-	Title   string             `json:"title,omitempty" bson:"title,omitempty"`
-	Results []Result           `bson:"results,omitempty"`
+	ID       primitive.ObjectID `bson:"_id,omitempty"`
+	Type     string             `json:"type,omitempty" bson:"type,omitempty"`
+	Title    string             `json:"title,omitempty" bson:"title,omitempty"`
+	IsActive bool               `json:"isActive" bson:"isActive"`
+	Results  []Result           `bson:"results,omitempty"`
 }
 
 type Scorer struct {
@@ -128,6 +129,9 @@ func (m *Manager) AddResult(r Result) {
 }
 
 //season-logic
+func (s *Season) ChangeStatus(isActive bool) {
+	s.IsActive = isActive
+}
 func (s *Season) AddResult(r Result) {
 	s.Results = append(s.Results, r)
 }

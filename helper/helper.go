@@ -515,6 +515,7 @@ func CreateSeason(season structs.Season) (structs.Insert, error) {
 		{Key: "type", Value: season.Type},
 		{Key: "title", Value: season.Title},
 		{Key: "results", Value: bson.A{}},
+		{Key: "isActive", Value: true},
 	})
 	if err != nil {
 		return insert, err

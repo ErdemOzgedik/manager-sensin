@@ -295,6 +295,35 @@ func createSeason(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(season)
 }
+func changeStatus(w http.ResponseWriter, r *http.Request) {
+	var s request.SeasonRequest
+	err := json.NewDecoder(r.Body).Decode(&s)
+	if err != nil {
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.DECODEERROR)
+		return
+	}
+
+	season, err := helper.GetSeasonByID(s.ID)
+	if err != nil {
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.GETSEASONERROR)
+		return
+	}
+
+	season.ChangeStatus(s.IsActive)
+	_, err = helper.UpdateSeason(&season)
+	if err != nil {
+		helper.ReturnError(w, http.StatusInternalServerError, err, constant.UPDATEERROR)
+		return
+	}
+
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(request.SeasonResponse{
+		ID:       season.ID.Hex(),
+		Title:    season.Title,
+		Type:     season.Type,
+		IsActive: season.IsActive,
+	})
+}
 func getStanding(w http.ResponseWriter, r *http.Request) {
 	var sr request.StatisticRequest
 	err := json.NewDecoder(r.Body).Decode(&sr)
@@ -570,6 +599,7 @@ func main() {
 	//season endpoint
 	router.HandleFunc("/season", getSeasons).Methods("GET", "OPTIONS")
 	router.HandleFunc("/season", createSeason).Methods("POST", "OPTIONS")
+	router.HandleFunc("/season", changeStatus).Methods("PUT", "OPTIONS")
 	router.HandleFunc("/statistics", getStanding).Methods("POST", "OPTIONS")
 
 	//result endpoint
