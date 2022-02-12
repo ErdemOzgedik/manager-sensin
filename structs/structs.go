@@ -58,7 +58,7 @@ type Season struct {
 	ID       primitive.ObjectID `bson:"_id,omitempty"`
 	Type     string             `json:"type,omitempty" bson:"type,omitempty"`
 	Title    string             `json:"title,omitempty" bson:"title,omitempty"`
-	IsActive bool               `json:"isactive" bson:"isActive"`
+	IsActive bool               `json:"isActive" bson:"isActive"`
 	Results  []Result           `bson:"results,omitempty"`
 }
 

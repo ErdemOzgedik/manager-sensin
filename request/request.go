@@ -25,13 +25,13 @@ type StatisticResponse struct {
 }
 type SeasonRequest struct {
 	ID       string `json:"id,omitempty"`
-	IsActive bool   `json:"isactive,omitempty"`
+	IsActive bool   `json:"isActive,omitempty"`
 }
 type SeasonResponse struct {
 	ID       string `json:"id,omitempty" bson:"_id,omitempty"`
 	Title    string `json:"title,omitempty"`
 	Type     string `json:"type,omitempty"`
-	IsActive bool   `json:"isactive"`
+	IsActive bool   `json:"isActive"`
 }
 type ManagePlayer struct {
 	Manager string `json:"manager,omitempty"`
