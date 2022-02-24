@@ -38,7 +38,7 @@ type Manager struct {
 	Points  int                `bson:"points,omitempty"`
 	Players []Player           `bson:"players,omitempty"`
 	Results []Result           `bson:"results,omitempty"`
-	Badges	[]string		   `bson:"badges,omitempty"`
+	Badges  []string           `bson:"badges,omitempty"`
 }
 
 type Result struct {
