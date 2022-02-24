@@ -412,6 +412,7 @@ func CreateManager(manager structs.Manager) (structs.Insert, error) {
 		{Key: "players", Value: bson.A{}},
 		{Key: "points", Value: 0},
 		{Key: "results", Value: bson.A{}},
+		{Key: "badges", Value: bson.A{}},
 	})
 	if err != nil {
 		return insert, err
